@@ -495,7 +495,7 @@ io.on('connection', (socket) => {
   });
 
   // ระบุจำนวนกินจริงสำหรับคนมาทีหลัง / กินน้อย (โดยไม่ต้องแยกการ์ดใหม่ ให้คงเหลือใบเดียว!)
-  socket.on('set-custom-qty', ({ roomId, billId, itemId, memberId, qty }) => {
+  socket.on('set-custom-qty', ({ roomId, billId, itemId, memberId, qty, mode }) => {
     let room = db.getRoom(roomId);
     if (!room) return;
     const bill = room.bills.find(b => b.id === billId);
@@ -507,7 +507,10 @@ io.on('connection', (socket) => {
     const parsedQty = parseInt(qty, 10);
 
     if (parsedQty > 0) {
-      item.customConsumers[memberId] = parsedQty;
+      item.customConsumers[memberId] = {
+        qty: parsedQty,
+        mode: mode || 'latecomer'
+      };
       if (!item.consumers) item.consumers = [];
       if (!item.consumers.includes(memberId)) item.consumers.push(memberId);
     } else {

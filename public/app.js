@@ -85,17 +85,29 @@ createApp({
       category: 'food'
     });
 
-    // Custom Quantity Modal (ฉันกินแค่...ขวด โดยไม่แตกการ์ดใหม่ ให้คงเหลือใบเดียว!)
+    // Custom Quantity Modal (คนมาทีหลัง ดื่มช่วงท้าย X ขวด หารร่วมกับเพื่อนในโต๊ะ)
     const showCustomQtyModal = ref(false);
     const customQtyTargetBillId = ref('');
     const customQtyTargetItem = ref(null);
-    const customQtyNumber = ref(1);
+    const customQtyNumber = ref(8);
+    const customQtyMode = ref('latecomer'); // 'latecomer' (หารร่วมกับเพื่อน) | 'solo' (กินคนเดียว)
 
     function openCustomQtyModal(billId, item) {
       customQtyTargetBillId.value = billId;
       customQtyTargetItem.value = item;
-      const myQty = (item.customConsumers && item.customConsumers[currentMemberId.value]) || 1;
-      customQtyNumber.value = myQty;
+      const val = item.customConsumers && item.customConsumers[currentMemberId.value];
+      if (val) {
+        if (typeof val === 'object') {
+          customQtyNumber.value = val.qty || 1;
+          customQtyMode.value = val.mode || 'latecomer';
+        } else {
+          customQtyNumber.value = parseInt(val, 10) || 1;
+          customQtyMode.value = 'latecomer';
+        }
+      } else {
+        customQtyNumber.value = Math.min(item.qty || 1, 8);
+        customQtyMode.value = 'latecomer';
+      }
       showCustomQtyModal.value = true;
     }
 
@@ -106,10 +118,12 @@ createApp({
         billId: customQtyTargetBillId.value,
         itemId: customQtyTargetItem.value.id,
         memberId: currentMemberId.value,
-        qty: customQtyNumber.value
+        qty: customQtyNumber.value,
+        mode: customQtyMode.value
       });
       showCustomQtyModal.value = false;
-      showToast(`ระบุว่าคุณกิน ${customQtyNumber.value} ขวด/ชิ้น เรียบร้อย! จ่ายเฉพาะส่วนนี้`, 'success');
+      const modeText = customQtyMode.value === 'latecomer' ? 'มาร่วมดื่มช่วงท้าย (หารร่วมกับเพื่อนในโต๊ะ)' : 'กินคนเดียว';
+      showToast(`ระบุว่าคุณ${modeText} ${customQtyNumber.value} ขวด เรียบร้อย!`, 'success');
     }
 
     function resetToEqualShare() {
@@ -122,12 +136,20 @@ createApp({
         qty: 0
       });
       showCustomQtyModal.value = false;
-      showToast('เปลี่ยนกลับเป็นหารเท่ากับเพื่อนเรียบร้อย!', 'info');
+      showToast('เปลี่ยนกลับเป็นหารเต็มเวลาเท่ากับเพื่อนเรียบร้อย!', 'info');
+    }
+
+    function getMyCustomConfig(item) {
+      if (!item || !item.customConsumers || !currentMemberId.value) return null;
+      const val = item.customConsumers[currentMemberId.value];
+      if (!val) return null;
+      if (typeof val === 'object') return val;
+      return { qty: val, mode: 'latecomer' };
     }
 
     function getMyCustomQty(item) {
-      if (!item || !item.customConsumers || !currentMemberId.value) return 0;
-      return item.customConsumers[currentMemberId.value] || 0;
+      const cfg = getMyCustomConfig(item);
+      return cfg ? cfg.qty : 0;
     }
 
     function resetBillToNomad(billId) {
@@ -146,10 +168,16 @@ createApp({
       const custom = item.customConsumers || {};
       const parts = [];
 
-      for (const [id, q] of Object.entries(custom)) {
+      for (const [id, val] of Object.entries(custom)) {
         const name = validMap.get(id);
+        const q = typeof val === 'object' ? val.qty : val;
+        const mode = typeof val === 'object' ? val.mode : 'latecomer';
         if (name && q > 0) {
-          parts.push(`${name} (${q} ชิ้น)`);
+          if (mode === 'latecomer') {
+            parts.push(`${name} (ทัน ${q} ขวดหลัง)`);
+          } else {
+            parts.push(`${name} (กินคนเดียว ${q} ชิ้น)`);
+          }
         }
       }
 
@@ -160,6 +188,37 @@ createApp({
       }
 
       return parts.join(', ');
+    }
+
+    function getItemMemberShare(billId, itemId, memberId) {
+      if (!summary.value || !summary.value.billCalculations) return 0;
+      const bc = summary.value.billCalculations.find(b => b.billId === billId);
+      if (!bc || !bc.memberTotals || !bc.memberTotals[memberId]) return 0;
+      const found = bc.memberTotals[memberId].itemsConsumed.find(i => i.itemId === itemId);
+      return found ? found.share : 0;
+    }
+
+    function getMemberConsumedItems(memberId) {
+      if (!summary.value || !summary.value.netBalances || !summary.value.netBalances[memberId]) return [];
+      return summary.value.netBalances[memberId].itemsConsumed || [];
+    }
+
+    function getMemberTotal(memberId) {
+      if (!summary.value || !summary.value.netBalances || !summary.value.netBalances[memberId]) return 0;
+      return summary.value.netBalances[memberId].consumedTotal || 0;
+    }
+
+    function calculateLatecomerPreviewShare(item, latecomerQty) {
+      if (!item) return 0;
+      const totalQty = parseInt(item.qty, 10) || 1;
+      const totalPrice = parseFloat(item.price) || 0;
+      const unitPrice = totalPrice / totalQty;
+      const q = Math.min(totalQty, Math.max(1, latecomerQty || 1));
+      
+      // จำนวนคนดื่มรายการนี้
+      const numDrinkers = (item.consumers && item.consumers.length > 0) ? item.consumers.length : (room.value?.members?.length || 1);
+      // ส่วนของ 8 ขวดหลัง หารด้วยจำนวนคนในโต๊ะที่ร่วมดื่ม
+      return Math.round((q * unitPrice / numDrinkers) * 100) / 100;
     }
 
     // Split Item Form (สำหรับคนมาทีหลัง หรือคนที่กินแค่ไม่กี่ขวด)
@@ -1188,12 +1247,18 @@ createApp({
       showCustomQtyModal,
       customQtyTargetItem,
       customQtyNumber,
+      customQtyMode,
       openCustomQtyModal,
       saveCustomQty,
       resetToEqualShare,
+      getMyCustomConfig,
       getMyCustomQty,
       resetBillToNomad,
       getDetailedConsumerNames,
+      getItemMemberShare,
+      getMemberConsumedItems,
+      getMemberTotal,
+      calculateLatecomerPreviewShare,
       openSplitItemModal,
       updateSplitNames,
       submitSplitItem,

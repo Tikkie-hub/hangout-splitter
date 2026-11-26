@@ -30,42 +30,116 @@ function calculateBill(bill, members) {
       const unitPrice = totalQty > 0 ? (itemTotalPrice / totalQty) : itemTotalPrice;
       totalItemsAmount += itemTotalPrice;
 
-      // 1.1 คำนวณคนที่ระบุจำนวนกินจริง (เช่น คนมาทีหลัง/กินน้อย เช่น เบียร์ 22 ขวด แต่กินแค่ 2 ขวด)
+      // กรองเฉพาะสมาชิกที่มีอยู่จริงในห้อง
+      const rawConsumers = (item.consumers || []).filter(id => validMemberIds.has(id));
       const customConsumers = item.customConsumers || {};
-      let customTotalCost = 0;
 
-      for (const [memId, q] of Object.entries(customConsumers)) {
-        if (validMemberIds.has(memId) && q > 0) {
-          const qtyForMem = Math.min(q, totalQty);
-          const costForMem = Math.round(qtyForMem * unitPrice * 100) / 100;
-          customTotalCost += costForMem;
+      // รวมสมาชิกทุกคนที่กินรายการนี้
+      const allConsumerIds = Array.from(new Set([
+        ...rawConsumers,
+        ...Object.keys(customConsumers).filter(id => {
+          const val = customConsumers[id];
+          return validMemberIds.has(id) && (typeof val === 'object' ? val.qty > 0 : val > 0);
+        })
+      ]));
 
+      if (allConsumerIds.length === 0) return;
+
+      // ตรวจสอบสมาชิกแต่ละคน:
+      // - solo: กินคนเดียว ไม่หารใคร (qty * unitPrice)
+      // - latecomer: มาทีหลัง ดื่มช่วงท้าย X ขวด (หารร่วมกับเพื่อนในโต๊ะ)
+      // - full: กินตั้งแต่ต้นจนจบ (totalQty ขวด)
+      let soloTotalCost = 0;
+      let soloQtyTotal = 0;
+
+      const memberConfig = {};
+      allConsumerIds.forEach(memId => {
+        const val = customConsumers[memId];
+        if (val) {
+          if (typeof val === 'object') {
+            memberConfig[memId] = {
+              mode: val.mode || 'latecomer',
+              qty: Math.min(totalQty, Math.max(1, parseInt(val.qty, 10) || 1))
+            };
+          } else {
+            // backward compatibility: number -> latecomer (มาร่วมดื่มช่วงท้าย X ขวด)
+            const q = Math.min(totalQty, Math.max(1, parseInt(val, 10) || 1));
+            memberConfig[memId] = {
+              mode: 'latecomer',
+              qty: q
+            };
+          }
+        } else {
+          // คนที่ติ๊กหารปกติ อยู่กินเต็มเวลา
+          memberConfig[memId] = {
+            mode: 'full',
+            qty: totalQty
+          };
+        }
+      });
+
+      // 1.1 คิดยอด Solo ก่อน (ถ้ามีใครเลือกกินคนเดียว ไม่หารใคร)
+      Object.entries(memberConfig).forEach(([memId, cfg]) => {
+        if (cfg.mode === 'solo') {
+          const cost = Math.round(cfg.qty * unitPrice * 100) / 100;
+          soloTotalCost += cost;
+          soloQtyTotal += cfg.qty;
           if (memberTotals[memId]) {
-            memberTotals[memId].subtotal += costForMem;
+            memberTotals[memId].subtotal += cost;
             memberTotals[memId].itemsConsumed.push({
               itemId: item.id,
-              name: `${item.name} (${qtyForMem} ขวด/ชิ้น)`,
-              share: costForMem,
+              name: `${item.name} (${cfg.qty} ชิ้น กินคนเดียว)`,
+              share: cost,
               category: item.category
             });
           }
         }
-      }
+      });
 
-      // 1.2 ส่วนที่เหลือ คิดหารเท่าให้กับเพื่อนที่ติ๊กกินปกติ (ไม่รวมคนที่ระบุจำนวนขวดแล้ว)
-      const generalConsumers = (item.consumers || []).filter(id => validMemberIds.has(id) && !customConsumers[id]);
-      const generalCount = generalConsumers.length;
-      const remainingCost = Math.max(0, itemTotalPrice - customTotalCost);
+      // 1.2 สมาชิกที่ร่วมหารในโต๊ะ (ทั้ง full และ latecomer ที่มาร่วมดื่มช่วงท้าย)
+      const sharedMembers = allConsumerIds.filter(id => memberConfig[id].mode !== 'solo');
+      const sharedTotalQty = Math.max(1, totalQty - soloQtyTotal);
+      const sharedTotalPrice = Math.max(0, itemTotalPrice - soloTotalCost);
+      const sharedUnitPrice = sharedTotalPrice / sharedTotalQty;
 
-      if (generalCount > 0 && remainingCost > 0) {
-        const share = remainingCost / generalCount;
-        generalConsumers.forEach(memberId => {
-          if (memberTotals[memberId]) {
-            memberTotals[memberId].subtotal += share;
-            memberTotals[memberId].itemsConsumed.push({
+      if (sharedMembers.length > 0 && sharedTotalPrice > 0) {
+        // จำลองขวด 1 .. sharedTotalQty
+        // สมาชิกจะร่วมดื่มขวด b เมื่อ b > (sharedTotalQty - cfg.qty)
+        // เช่น totalQty 22, เพลงทัน 8 ขวดหลัง -> ดื่มขวด 15..22
+        const memberItemShares = {};
+        sharedMembers.forEach(id => { memberItemShares[id] = 0; });
+
+        for (let b = 1; b <= sharedTotalQty; b++) {
+          const drinkersForBottle = sharedMembers.filter(id => {
+            const q = memberConfig[id].qty;
+            return b > (sharedTotalQty - q);
+          });
+
+          if (drinkersForBottle.length > 0) {
+            const bottleShare = sharedUnitPrice / drinkersForBottle.length;
+            drinkersForBottle.forEach(id => {
+              memberItemShares[id] += bottleShare;
+            });
+          }
+        }
+
+        // บันทึกยอดที่คำนวณได้ลง memberTotals
+        sharedMembers.forEach(memId => {
+          const rawShare = memberItemShares[memId];
+          const roundedShare = Math.round(rawShare * 100) / 100;
+          if (roundedShare > 0 && memberTotals[memId]) {
+            memberTotals[memId].subtotal += roundedShare;
+            const cfg = memberConfig[memId];
+            let label = item.name;
+            if (cfg.mode === 'latecomer' && cfg.qty < totalQty) {
+              label = `${item.name} (ทัน ${cfg.qty} ขวดหลัง • ร่วมหารในโต๊ะ)`;
+            } else if (sharedMembers.some(id => memberConfig[id].mode === 'latecomer' && memberConfig[id].qty < totalQty)) {
+              label = `${item.name} (ส่วนต้น + ร่วมหารช่วงท้าย)`;
+            }
+            memberTotals[memId].itemsConsumed.push({
               itemId: item.id,
-              name: item.name,
-              share: share,
+              name: label,
+              share: roundedShare,
               category: item.category
             });
           }
@@ -151,6 +225,7 @@ function calculateRoomSummary(room) {
       avatar: m.avatar,
       paidTotal: 0,
       consumedTotal: 0,
+      itemsConsumed: [],
       net: 0 // + คือได้เงินคืน, - คือต้องจ่ายออก
     };
   });
@@ -164,6 +239,9 @@ function calculateRoomSummary(room) {
       // บันทึกยอดที่บริโภค
       if (netBalances[mt.memberId]) {
         netBalances[mt.memberId].consumedTotal += mt.total;
+        if (mt.itemsConsumed && mt.itemsConsumed.length > 0) {
+          netBalances[mt.memberId].itemsConsumed.push(...mt.itemsConsumed);
+        }
       }
 
       // ถ้าคนนี้ไม่ใช่คนจ่าย และมียอดต้องจ่ายในบิลนี้

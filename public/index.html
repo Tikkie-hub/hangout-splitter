@@ -430,13 +430,18 @@
 
                 <!-- SINGLE PROMINENT TICK BUTTON / CUSTOM QTY BUTTON -->
                 <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
-                  <!-- ถ้าเราระบุจำนวนไว้แล้ว เช่น กิน 2 ขวด -->
+                  <!-- ถ้าเราระบุจำนวนไว้แล้ว เช่น มาทีหลัง ทัน 8 ขวดหลัง หรือกินคนเดียว -->
                   <button v-if="getMyCustomQty(item) > 0" 
                           class="btn" 
                           @click="openCustomQtyModal(b.id, item)"
-                          style="flex: 1; padding: 10px 12px; font-weight: 700; font-size: 0.9rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; color: #fbbf24;">
+                          style="flex: 1; padding: 10px 12px; font-weight: 700; font-size: 0.88rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; color: #fbbf24;">
                     <span style="font-size: 1.1rem;">🍺</span>
-                    <span>ฉันกิน {{ getMyCustomQty(item) }} ชิ้น (฿{{ formatMoney(getMyCustomQty(item) * (item.price / (item.qty || 1))) }}) • แก้ไข</span>
+                    <span v-if="getMyCustomConfig(item)?.mode === 'solo'">
+                      ฉันกินคนเดียว {{ getMyCustomQty(item) }} ชิ้น (฿{{ formatMoney(getItemMemberShare(b.id, item.id, currentMemberId)) }}) • แก้ไข
+                    </span>
+                    <span v-else>
+                      ทัน {{ getMyCustomQty(item) }} ขวดหลัง (หารในโต๊ะ ฿{{ formatMoney(getItemMemberShare(b.id, item.id, currentMemberId)) }}) • แก้ไข
+                    </span>
                   </button>
 
                   <!-- ถ้ากินปกติ (หารเท่า) หรือ ยังไม่ได้ติ๊ก -->
@@ -449,12 +454,12 @@
                     <span>{{ isConsumedByMe(item) ? 'ฉันกินอันนี้ (หารเท่า)' : 'แตะถ้าฉันกินอันนี้' }}</span>
                   </button>
 
-                  <!-- ปุ่มระบุจำนวนขวด (สำหรับคนมาทีหลัง หรือกินน้อย ไม่แตกการ์ดซ้ำ) -->
+                  <!-- ปุ่มสำหรับคนมาทีหลัง หรือกินไม่กี่ขวด -->
                   <button v-if="(item.qty || 1) > 1" 
                           @click="openCustomQtyModal(b.id, item)" 
-                          style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.8rem; font-weight: 600; border-radius: 8px; padding: 10px 8px; cursor: pointer; white-space: nowrap;"
-                          title="ระบุว่าฉันกินกี่ขวด">
-                    🍺 กินแค่...ขวด
+                          style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.8rem; font-weight: 600; border-radius: 8px; padding: 10px 10px; cursor: pointer; white-space: nowrap;"
+                          title="คนมาทีหลัง ทันกินแค่ช่วงท้าย หรือกินแค่ไม่กี่ขวด">
+                    🍺 ทันแค่...ขวด
                   </button>
 
                   <button @click="toggleAllConsumers(b.id, item.id)" 
@@ -490,39 +495,6 @@
               </div>
             </div>
 
-            <!-- PER-BILL REAL-TIME LIVE SUMMARY BOX (สรุปยอดกินสดของทุกคนในบิลนี้) -->
-            <div style="margin-top: 14px; background: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span class="pulse-indicator"></span>
-                  <strong style="color: #fbbf24; font-size: 0.95rem;">📊 สรุปยอดสด Real-time บิลนี้ (฿{{ formatMoney(getBillTotal(b)) }})</strong>
-                </div>
-                <span style="font-size: 0.75rem; color: #38bdf8;">คนจ่าย: {{ getPayerName(b.payerId) }}</span>
-              </div>
-              <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px;">
-                ⚡ ตัวเลขเปลี่ยนทันทีทุกครั้งเมื่อเพื่อนเข้ามาแตะติ๊กของกิน
-              </p>
-
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                <div v-for="m in room.members" :key="m.id"
-                     style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center;">
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <span>{{ m.avatar }}</span>
-                    <strong style="font-size: 0.85rem; color: #f8fafc;">{{ m.name }}</strong>
-                    <span v-if="m.id === currentMemberId" class="badge badge-food" style="padding: 1px 6px; font-size: 0.65rem;">(คุณ)</span>
-                  </div>
-                  <div style="text-align: right;">
-                    <span v-if="getMemberBillShare(b, m.id) > 0" style="color: #34d399; font-weight: 700; font-size: 0.95rem;">
-                      กินไปแล้ว ฿{{ formatMoney(getMemberBillShare(b, m.id)) }}
-                    </span>
-                    <span v-else style="color: #64748b; font-size: 0.8rem;">
-                      ยังไม่ได้ติ๊ก (฿0.00)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Add Item Buttons for this Bill -->
             <div style="margin-top: 10px; display: flex; gap: 8px;">
               <label class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 0.8rem; cursor: pointer; text-align: center; border-color: #38bdf8; color: #38bdf8;">
@@ -536,36 +508,63 @@
           </div>
         </div>
 
-        <!-- GRAND TOTAL SUMMARY CARD (สรุปยอดรวมทุกบิล & สลิป) -->
-        <div class="card" v-if="room.bills.length > 0" style="margin-top: 20px; border: 2px solid #10b981; background: linear-gradient(180deg, #1e293b, #0f172a);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <!-- COMPREHENSIVE INDIVIDUAL SUMMARY CARD (สรุปยอดรวมแยกตามรายคน ไม่ซ้ำซ้อน) -->
+        <div class="card" v-if="room.bills.length > 0" style="margin-top: 20px; border: 2px solid #10b981; background: #0f172a; box-shadow: 0 4px 20px rgba(0,0,0,0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
             <div>
-              <h3 style="font-size: 1.05rem; font-weight: 700; color: #f8fafc;">
-                💰 สรุปยอดรวมสุทธิ (ทุกบิล & สลิป)
-              </h3>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="pulse-indicator"></span>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">
+                  💰 สรุปยอดเงินของแต่ละคน (Real-time)
+                </h3>
+              </div>
               <span style="font-size: 0.75rem; color: #94a3b8;">
-                แนบกี่บิลกี่สลิป ระบบก็รวมยอดเงินให้ตรงนี้
+                แจกแจงละเอียดว่าแต่ละคนกินอะไรไปบ้าง ตกคนละกี่บาท
               </span>
             </div>
-            <button class="btn btn-success" @click="currentTab = 'summary'" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;">
+            <button class="btn btn-success" @click="currentTab = 'summary'" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700; white-space: nowrap;">
               ดู QR โอนเงิน ➔
             </button>
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
             <div v-for="m in room.members" :key="m.id"
-                 style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span>{{ m.avatar }}</span>
-                <strong style="color: #f8fafc; font-size: 0.9rem;">{{ m.name }}</strong>
-                <span v-if="m.id === currentMemberId" class="badge badge-food" style="padding: 1px 6px; font-size: 0.65rem;">(คุณ)</span>
+                 style="background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px;">
+              
+              <!-- Header Row: Name & Total Amount -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.2rem;">{{ m.avatar }}</span>
+                  <div>
+                    <strong style="color: #f8fafc; font-size: 1rem;">{{ m.name }}</strong>
+                    <span v-if="m.id === currentMemberId" class="badge badge-food" style="margin-left: 6px; padding: 2px 6px; font-size: 0.65rem;">(คุณ)</span>
+                    <span v-if="m.isHost" class="badge" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; margin-left: 4px; padding: 2px 6px; font-size: 0.65rem;">หัวโต๊ะ</span>
+                  </div>
+                </div>
+
+                <div style="text-align: right;">
+                  <div style="font-size: 0.75rem; color: #94a3b8;">ยอดที่ต้องจ่าย:</div>
+                  <strong :style="{ color: getMemberTotal(m.id) > 0 ? '#34d399' : '#64748b', fontSize: '1.15rem' }">
+                    ฿{{ formatMoney(getMemberTotal(m.id)) }}
+                  </strong>
+                </div>
               </div>
-              <div style="text-align: right;">
-                <span style="font-size: 0.75rem; color: #94a3b8; margin-right: 6px;">ยอดที่ต้องจ่าย:</span>
-                <strong style="color: #34d399; font-size: 1.05rem;">
-                  ฿{{ formatMoney(summary?.netBalances[m.id]?.consumedTotal || 0) }}
-                </strong>
+
+              <!-- รายการที่คนนี้ร่วมกิน/ดื่มจริง พร้อมยอดหารย่อย -->
+              <div v-if="getMemberConsumedItems(m.id).length > 0" style="margin-top: 8px; border-top: 1px dashed #334155; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+                <div v-for="(it, idx) in getMemberConsumedItems(m.id)" :key="idx"
+                     style="background: rgba(15, 23, 42, 0.7); border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;">
+                  <span v-if="it.category === 'alcohol'">🍺</span>
+                  <span v-else-if="it.category === 'mixer'">🥤</span>
+                  <span v-else>🍽️</span>
+                  <span style="color: #cbd5e1;">{{ it.name }}</span>
+                  <strong style="color: #fbbf24;">฿{{ formatMoney(it.share) }}</strong>
+                </div>
               </div>
+              <div v-else style="margin-top: 6px; font-size: 0.75rem; color: #64748b; font-style: italic;">
+                (ยังไม่ได้ติ๊กเลือกรายการอาหารหรือเครื่องดื่ม)
+              </div>
+
             </div>
           </div>
         </div>
@@ -1189,16 +1188,28 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- MODAL 6: ระบุจำนวนขวดที่กิน (คนมาทีหลัง / กินน้อย ไม่แตกการ์ดซ้ำ) -->
+    <!-- MODAL 6: ระบุจำนวนขวด (คนมาทีหลัง ดื่มช่วงท้าย หารร่วมกับเพื่อนในโต๊ะ) -->
     <!-- ============================================== -->
     <div v-if="showCustomQtyModal" class="modal-overlay" @click.self="showCustomQtyModal = false">
       <div class="modal-content" v-if="customQtyTargetItem">
         <h3 style="font-size: 1.25rem; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">
-          🍺 ระบุจำนวนที่คุณกิน (คนมาทีหลัง / กินน้อย)
+          🍺 คนมาทีหลัง / ดื่มแค่ช่วงท้าย
         </h3>
         <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">
-          จ่ายเฉพาะจำนวนขวดที่คุณดื่มจริง ส่วนขวดที่เหลือเพื่อนๆ ในโต๊ะจะหารเท่ากันอัตโนมัติ (ไม่ทำให้การ์ดในบิลซ้ำซ้อน)
+          เช่น มาทันดื่มแค่ 8 ขวดหลัง ระบบจะคิดเฉพาะ 8 ขวดนี้ และหารร่วมกับเพื่อนในโต๊ะให้อัตโนมัติ (การ์ดไม่แตกซ้ำ)
         </p>
+
+        <!-- Mode Selector -->
+        <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+          <button class="btn" :class="customQtyMode === 'latecomer' ? 'btn-primary' : 'btn-outline'" 
+                  @click="customQtyMode = 'latecomer'" style="flex: 1; padding: 8px 6px; font-size: 0.8rem; font-weight: 700;">
+            🍻 มาทีหลัง ทันช่วงท้าย (หารในโต๊ะ)
+          </button>
+          <button class="btn" :class="customQtyMode === 'solo' ? 'btn-primary' : 'btn-outline'" 
+                  @click="customQtyMode = 'solo'" style="flex: 1; padding: 8px 6px; font-size: 0.8rem;">
+            👤 กินคนเดียว (ไม่หารใคร)
+          </button>
+        </div>
 
         <div style="background: #0f172a; border-radius: 10px; padding: 12px; margin-bottom: 14px; border: 1px solid #334155;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1212,7 +1223,8 @@
 
         <div style="margin-bottom: 16px;">
           <label style="display: block; font-size: 0.9rem; color: #38bdf8; font-weight: 700; margin-bottom: 8px;">
-            คุณ ({{ currentMember?.name }}) ดื่ม/กินไปกี่ขวด?
+            <span v-if="customQtyMode === 'latecomer'">คุณ ({{ currentMember?.name }}) มาทันดื่มกี่ขวดหลัง?</span>
+            <span v-else>คุณ ({{ currentMember?.name }}) สั่งกินคนเดียวกี่ชิ้น?</span>
           </label>
           <div style="display: flex; align-items: center; justify-content: center; gap: 14px;">
             <button class="btn btn-outline" @click="customQtyNumber = Math.max(1, customQtyNumber - 1)" style="width: 44px; height: 44px; font-size: 1.3rem; font-weight: 800; padding: 0;">-</button>
@@ -1224,23 +1236,40 @@
 
         <!-- Live Calculation Box -->
         <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 10px; padding: 12px; margin-bottom: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 0.85rem; color: #cbd5e1;">ยอดที่คุณต้องจ่าย ({{ customQtyNumber }} ขวด):</span>
-            <strong style="color: #fbbf24; font-size: 1.15rem;">
-              ฿{{ formatMoney(customQtyNumber * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }}
-            </strong>
+          <!-- Case Latecomer -->
+          <div v-if="customQtyMode === 'latecomer'">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 0.85rem; color: #cbd5e1;">ยอดที่คุณต้องจ่าย (หาร {{ customQtyNumber }} ขวดหลัง):</span>
+              <strong style="color: #34d399; font-size: 1.25rem;">
+                ฿{{ formatMoney(calculateLatecomerPreviewShare(customQtyTargetItem, customQtyNumber)) }}
+              </strong>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px dashed #475569; padding-top: 6px; line-height: 1.4;">
+              <div>🍻 <strong>{{ customQtyNumber }} ขวดหลัง (฿{{ formatMoney(customQtyNumber * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }})</strong>: หารร่วมกับเพื่อนในโต๊ะ ตกคนละ ฿{{ formatMoney(calculateLatecomerPreviewShare(customQtyTargetItem, customQtyNumber)) }}</div>
+              <div style="margin-top: 2px;">⏳ <strong>{{ customQtyTargetItem.qty - customQtyNumber }} ขวดก่อนหน้า (฿{{ formatMoney((customQtyTargetItem.qty - customQtyNumber) * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }})</strong>: เพื่อนๆ กลุ่มแรกหารกันเอง คุณไม่ต้องจ่าย!</div>
+            </div>
           </div>
-          <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px dashed #475569; padding-top: 6px;">
-            ส่วนที่เหลืออีก {{ customQtyTargetItem.qty - customQtyNumber }} ขวด (฿{{ formatMoney((customQtyTargetItem.qty - customQtyNumber) * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }}) เพื่อนๆ คนอื่นจะหารเท่ากัน
+
+          <!-- Case Solo -->
+          <div v-else>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 0.85rem; color: #cbd5e1;">ยอดที่คุณต้องจ่ายคนเดียว 100%:</span>
+              <strong style="color: #fbbf24; font-size: 1.2rem;">
+                ฿{{ formatMoney(customQtyNumber * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }}
+              </strong>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px dashed #475569; padding-top: 6px;">
+              คิดเงินที่คุณคนเดียว {{ customQtyNumber }} ชิ้นเต็ม ไม่แบ่งหารกับใคร
+            </div>
           </div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <button class="btn btn-primary" @click="saveCustomQty" style="padding: 12px; font-weight: 700; font-size: 1rem;">
-            💾 บันทึกว่ากิน {{ customQtyNumber }} ขวด
+            💾 บันทึกว่ามาทัน {{ customQtyNumber }} ขวดหลัง
           </button>
           <button v-if="getMyCustomQty(customQtyTargetItem) > 0" class="btn btn-outline" @click="resetToEqualShare" style="padding: 10px; font-size: 0.85rem; border-color: #38bdf8; color: #38bdf8;">
-            🔄 ลบจำนวนขวด (กลับไปหารเท่ากับเพื่อน)
+            🔄 ลบจำนวนขวด (กลับไปหารเต็มเวลากับเพื่อน)
           </button>
           <button class="btn btn-outline" @click="showCustomQtyModal = false" style="padding: 10px; font-size: 0.85rem;">
             ยกเลิก
