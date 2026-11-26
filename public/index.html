@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>หารเงินวงเหล้า 🍻 สแกนสลิป แยกค่าเหล้า ติ๊กของกิน Real-time</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/vendor/vue/vue.global.prod.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div id="app" v-cloak class="max-w-md mx-auto" style="max-width: 540px; margin: 0 auto; padding: 12px;">
+
+    <!-- TOAST NOTIFICATION -->
+    <div v-if="toast.show" 
+         :style="{ background: toast.type === 'error' ? '#ef4444' : (toast.type === 'success' ? '#10b981' : '#3b82f6') }"
+         style="position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; color: white; padding: 10px 20px; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-align: center; max-width: 90%;">
+      {{ toast.message }}
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW 1: ไม่ได้อยู่ในห้อง (สร้างห้อง / เข้าห้อง) -->
+    <!-- ============================================== -->
+    <div v-if="!room" style="padding-top: 30px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 3.5rem; margin-bottom: 8px;">🍻</div>
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; margin-bottom: 6px;">หารเงินวงเหล้า</h1>
+        <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5;">
+          สแกนสลิป แนบค่าเหล้าสั่งเพิ่ม ติ๊กของกิน<br>
+          ทุกคนเห็นข้อมูลพร้อมกัน สดแบบ Real-time!
+        </p>
+      </div>
+
+      <!-- Quick Demo Button -->
+      <div style="margin-bottom: 24px; text-align: center;">
+        <button class="btn btn-primary" @click="loadDemoRoom" style="width: 100%; padding: 14px; font-size: 1.05rem;">
+          🚀 กดดูโต๊ะตัวอย่างทันที (ศุกร์หรรษา)
+        </button>
+        <span style="display: block; color: #64748b; font-size: 0.8rem; margin-top: 6px;">
+          (มีทั้งบิลเปิดโต๊ะ สลิปโอนค่าเบียร์สั่งเพิ่ม และคนมาทีหลัง)
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+        <button class="btn" :class="joinForm.isJoin ? 'btn-outline' : 'btn-primary'" @click="joinForm.isJoin = false" style="flex: 1;">
+          ✨ เปิดโต๊ะใหม่
+        </button>
+        <button class="btn" :class="joinForm.isJoin ? 'btn-primary' : 'btn-outline'" @click="joinForm.isJoin = true" style="flex: 1;">
+          🔑 มีรหัสห้องแล้ว
+        </button>
+      </div>
+
+      <!-- Form สร้างห้อง -->
+      <div v-if="!joinForm.isJoin" class="card">
+        <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">
+          📝 ข้อมูลเปิดโต๊ะ
+        </h2>
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">ชื่อโต๊ะ / วงเหล้า</label>
+          <input v-model="createForm.name" class="input" placeholder="เช่น ปาร์ตี้วันเกิด, ร้านนั่งชิลคืนวันศุกร์" />
+        </div>
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">ชื่อของคุณ (เช่น นานะ)</label>
+          <input v-model="createForm.hostName" class="input" placeholder="เช่น นานะ, บอย, ตั้ม" />
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">
+            เบอร์พร้อมเพย์ (ไม่บังคับ)
+          </label>
+          <input v-model="createForm.hostPromptPay" class="input" placeholder="เช่น 0812345678 (ใส่ทีหลังได้)" />
+          <span style="font-size: 0.75rem; color: #64748b; display: block; margin-top: 4px;">
+            💡 ใครจ่ายบิลไหน/สลิปไหน สามารถเลือกคนจ่ายแยกได้อิสระ ไม่จำเป็นต้องเป็นคนเดียวครับ
+          </span>
+        </div>
+        <button class="btn btn-success" @click="handleCreateRoom" style="width: 100%; padding: 14px;">
+          🍻 สร้างโต๊ะแล้วเริ่มหารเงินเลย!
+        </button>
+      </div>
+
+      <!-- Form เข้าร่วมห้อง -->
+      <div v-else class="card">
+        <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">
+          🔑 เข้าร่วมโต๊ะเพื่อน
+        </h2>
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">รหัสห้อง (6 ตัวอักษร)</label>
+          <input v-model="joinForm.roomId" class="input" placeholder="เช่น BEER88" style="text-transform: uppercase; font-weight: 700; letter-spacing: 2px;" />
+        </div>
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">ชื่อของคุณ</label>
+          <input v-model="joinForm.name" class="input" placeholder="เช่น นัท, เจน" />
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px;">เบอร์พร้อมเพย์ (ไม่บังคับ)</label>
+          <input v-model="joinForm.promptpay" class="input" placeholder="เช่น 089xxxxxxx" />
+        </div>
+        <button class="btn btn-primary" @click="handleJoinRoom" style="width: 100%; padding: 14px;">
+          เข้าโต๊ะ 🚀
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: อยู่ในห้องแล้ว (MAIN VIEW) -->
+    <!-- ============================================== -->
+    <div v-else>
+      <!-- Top Sticky Header -->
+      <div class="sticky-top-bar" style="margin: -12px -12px 14px -12px; padding: 12px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="pulse-indicator"></span>
+              <h1 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">{{ room.name }}</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                รหัสห้อง: <strong style="color: #fbbf24; font-family: monospace; font-size: 0.9rem;">{{ room.id }}</strong>
+              </span>
+              <button @click="copyShareLink" style="background: none; border: none; color: #60a5fa; font-size: 0.75rem; cursor: pointer; text-decoration: underline;">
+                🔗 ลิงก์ห้อง
+              </button>
+              <button @click="copyLineSummary" style="background: none; border: none; color: #34d399; font-size: 0.75rem; cursor: pointer; text-decoration: underline;">
+                💬 สรุปส่งไลน์
+              </button>
+            </div>
+          </div>
+
+          <!-- User Identity Switcher -->
+          <div style="text-align: right;">
+            <div style="font-size: 0.7rem; color: #94a3b8;">คุณคือ:</div>
+            <select :value="currentMemberId" @change="switchMember($event.target.value)" 
+                    style="background: #334155; color: #34d399; font-weight: 700; border: 1px solid #475569; border-radius: 8px; padding: 4px 8px; font-size: 0.85rem; outline: none;">
+              <option v-for="m in room.members" :key="m.id" :value="m.id">
+                {{ m.avatar }} {{ m.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div style="display: flex; gap: 6px; overflow-x: auto; padding-top: 4px;">
+          <button class="btn" :class="currentTab === 'bills' ? 'btn-primary' : 'btn-outline'" @click="currentTab = 'bills'" style="padding: 8px 12px; font-size: 0.85rem; flex: 1; white-space: nowrap;">
+            📋 บิล & สลิป ({{ room.bills.length }})
+          </button>
+          <button class="btn" :class="currentTab === 'scan' ? 'btn-primary' : 'btn-outline'" @click="currentTab = 'scan'" style="padding: 8px 12px; font-size: 0.85rem; flex: 1; white-space: nowrap;">
+            📸 สแกนสลิป
+          </button>
+          <button class="btn" :class="currentTab === 'summary' ? 'btn-success' : 'btn-outline'" @click="currentTab = 'summary'" style="padding: 8px 12px; font-size: 0.85rem; flex: 1; white-space: nowrap;">
+            💰 สรุปโอนเงิน
+          </button>
+          <button class="btn" :class="currentTab === 'members' ? 'btn-primary' : 'btn-outline'" @click="currentTab = 'members'" style="padding: 8px 12px; font-size: 0.85rem; white-space: nowrap;">
+            👥 เพื่อน ({{ room.members.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 1: บิล & สลิป (BILLS & SLIPS) -->
+      <!-- ============================================== -->
+      <div v-if="currentTab === 'bills'">
+        <!-- Action Row (Direct Photo-to-Bill vs Lump-Sum Slip vs Manual) -->
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <!-- ถ่ายรูปบิลแยกเมนูอัตโนมัติ -->
+          <label class="btn btn-primary" style="flex: 1; padding: 10px; font-size: 0.85rem; cursor: pointer; text-align: center; background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <span>📸 ถ่ายรูปบิล (แยกเมนูทันที)</span>
+            <input type="file" accept="image/*" @change="handleQuickPhotoBill" style="display: none;" />
+          </label>
+          
+          <!-- แนบสลิปโอนเงินก้อน -->
+          <button class="btn btn-primary" @click="openNewSlipModal" style="flex: 1; padding: 10px; font-size: 0.85rem; background: linear-gradient(135deg, #f59e0b, #b45309);">
+            ⚡ แนบสลิปโอนเงินก้อน
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+          <button @click="openNewBillModal" style="background: none; border: none; color: #94a3b8; font-size: 0.75rem; cursor: pointer; text-decoration: underline;">
+            ✏️ หรือพิมพ์บิลอาหารเองแบบแมนนวล
+          </button>
+        </div>
+
+        <!-- QUICK MEMBERS BAR & JOIN (เพิ่มชื่อเพื่อนในวง) -->
+        <div style="background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 12px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #f8fafc;">
+              👥 เพื่อนในวงนี้ ({{ room.members.length }} คน):
+            </span>
+            <span style="font-size: 0.75rem; color: #94a3b8;">แตะชื่อใครกิน คนนั้นหาร</span>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+            <span v-for="m in room.members" :key="m.id" 
+                  class="badge" 
+                  :style="{ background: m.id === currentMemberId ? '#10b981' : '#0f172a', color: m.id === currentMemberId ? 'white' : '#cbd5e1', border: '1px solid #475569', fontSize: '0.8rem', padding: '4px 10px' }">
+              {{ m.avatar }} {{ m.name }} {{ m.id === currentMemberId ? '(คุณ)' : '' }}
+            </span>
+          </div>
+
+          <!-- Quick Name Input for any friend -->
+          <div style="display: flex; gap: 6px; border-top: 1px dashed #334155; padding-top: 8px;">
+            <input v-model="quickNewMemberName" class="input" placeholder="พิมพ์ชื่อเพื่อน หรือชื่อคุณ (เช่น บอย, ตั้ม, นัท)..." style="padding: 8px 12px; font-size: 0.85rem;" @keyup.enter="quickJoinCurrentRoom" />
+            <button class="btn btn-primary" @click="quickJoinCurrentRoom" style="padding: 8px 14px; font-size: 0.85rem; white-space: nowrap;">
+              ➕ เพิ่มชื่อ
+            </button>
+          </div>
+        </div>
+
+        <!-- SEARCH & FILTER BAR -->
+        <div style="margin-bottom: 16px;">
+          <div style="position: relative; margin-bottom: 8px;">
+            <input v-model="searchQuery" class="input" placeholder="🔍 พิมพ์ค้นหา (เช่น เบียร์, น้ำแข็ง, ข้าวผัด, ชื่อคนจ่าย)..." style="padding-left: 12px; font-size: 0.9rem;" />
+            <button v-if="searchQuery" @click="searchQuery = ''" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 0.9rem; cursor: pointer;">
+              ✕
+            </button>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
+            <button class="badge" :style="{ background: filterCategory === 'all' ? '#3b82f6' : '#1e293b', color: 'white', border: '1px solid #475569', cursor: 'pointer' }" @click="filterCategory = 'all'">
+              ทั้งหมด
+            </button>
+            <button class="badge" :style="{ background: filterCategory === 'alcohol' ? '#f59e0b' : '#1e293b', color: filterCategory === 'alcohol' ? 'black' : '#fbbf24', border: '1px solid #f59e0b', cursor: 'pointer' }" @click="filterCategory = 'alcohol'">
+              🍻 แอลกอฮอล์
+            </button>
+            <button class="badge" :style="{ background: filterCategory === 'mixer' ? '#06b6d4' : '#1e293b', color: filterCategory === 'mixer' ? 'black' : '#38bdf8', border: '1px solid #06b6d4', cursor: 'pointer' }" @click="filterCategory = 'mixer'">
+              🧊 น้ำแข็ง/มิกเซอร์
+            </button>
+            <button class="badge" :style="{ background: filterCategory === 'food' ? '#10b981' : '#1e293b', color: filterCategory === 'food' ? 'black' : '#34d399', border: '1px solid #10b981', cursor: 'pointer' }" @click="filterCategory = 'food'">
+              🍲 อาหาร/กับแกล้ม
+            </button>
+            <button class="badge" :style="{ background: filterCategory === 'slip' ? '#8b5cf6' : '#1e293b', color: filterCategory === 'slip' ? 'white' : '#c084fc', border: '1px solid #8b5cf6', cursor: 'pointer' }" @click="filterCategory = 'slip'">
+              🧾 สลิปโอนเงิน
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="filteredBills.length === 0" class="card" style="text-align: center; padding: 36px 16px;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🧾</div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">
+            {{ searchQuery ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีบิลหรือสลิป' }}
+          </h3>
+          <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px;">
+            {{ searchQuery ? 'ลองค้นหาด้วยคำอื่น หรือกดล้างการค้นหา' : 'กดปุ่มด้านบนเพื่อแนบสลิปโอนเงิน หรือเพิ่มบิลอาหารได้เลย!' }}
+          </p>
+          <button v-if="searchQuery" class="btn btn-outline" @click="searchQuery = ''; filterCategory = 'all'">
+            ล้างการค้นหา
+          </button>
+          <button v-else class="btn btn-primary" @click="openNewSlipModal">
+            ⚡ แนบสลิปแรกเลย
+          </button>
+        </div>
+
+        <!-- Bills & Slips List -->
+        <div v-for="b in filteredBills" :key="b.id" class="card" 
+             :style="{ marginBottom: '18px', borderLeft: b.isSlip ? '4px solid #8b5cf6' : '4px solid #f59e0b' }">
+          
+          <!-- ===================================== -->
+          <!-- CASE A: LUMP-SUM PAYMENT SLIP (สลิปโอนเงินก้อน) -->
+          <!-- ===================================== -->
+          <div v-if="b.isSlip">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+              <div>
+                <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid #8b5cf6; margin-bottom: 4px;">
+                  🧾 สลิปโอนเงินจ่ายไปก่อน
+                </span>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-top: 2px;">
+                  {{ b.title }}
+                </h3>
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">
+                  💸 <strong style="color: #38bdf8;">{{ getPayerName(b.payerId) }}</strong> โอนเงินจ่ายร้านไปก่อน
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 1.35rem; font-weight: 800; color: #fbbf24;">
+                  ฿{{ formatMoney(b.slipAmount) }}
+                </div>
+                <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;">
+                  <a v-if="b.receiptImage" :href="b.receiptImage" target="_blank" style="color: #38bdf8; font-size: 0.75rem; text-decoration: underline;">
+                    🖼️ ดูรูปสลิป
+                  </a>
+                  <button @click="deleteBill(b.id)" style="background: none; border: none; color: #f43f5e; font-size: 0.75rem; cursor: pointer;">
+                    ลบ 🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags of What was Paid -->
+            <div style="margin-bottom: 12px; background: #0f172a; padding: 10px 12px; border-radius: 10px; border: 1px solid #334155;">
+              <span style="font-size: 0.8rem; color: #fbbf24; font-weight: 700; display: block; margin-bottom: 6px;">
+                🏷️ สลิปนี้จ่ายค่าอะไรไป:
+              </span>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <span v-for="tag in b.slipTags" :key="tag" class="badge" style="background: #334155; color: #f8fafc; font-size: 0.85rem; padding: 4px 10px;">
+                  {{ tag }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Single Action Button for Current Member -->
+            <div style="margin-bottom: 10px;">
+              <button class="btn" 
+                      :class="isSlipConsumedByMe(b) ? 'btn-success' : 'btn-outline'"
+                      @click="toggleSlipConsume(b.id, currentMemberId)" 
+                      style="width: 100%; padding: 12px; font-weight: 700; font-size: 1rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="font-size: 1.1rem;">{{ isSlipConsumedByMe(b) ? '✅' : '⚪' }}</span>
+                <span>{{ isSlipConsumedByMe(b) ? 'ฉันร่วมหารสลิปนี้' : 'แตะเพื่อร่วมหารสลิปนี้ (ฉันกิน/ดื่มด้วย)' }}</span>
+              </button>
+            </div>
+
+            <!-- Consumers Info & Helper Button -->
+            <div style="background: #0f172a; border-radius: 8px; padding: 8px 12px; border: 1px solid #334155; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.8rem; color: #94a3b8;">
+                  คนที่ร่วมหารสลิปนี้:
+                </span>
+                <button @click="toggleAllSlipConsumers(b.id)" 
+                        style="background: #334155; border: none; color: #cbd5e1; font-size: 0.75rem; border-radius: 6px; padding: 3px 8px; cursor: pointer;">
+                  {{ (b.slipConsumers || []).length === room.members.length ? 'เคลียร์' : 'ทุกคนที่อยู่' }}
+                </button>
+              </div>
+
+              <div style="font-size: 0.85rem; font-weight: 600; color: #38bdf8;">
+                {{ getConsumerNames(b.slipConsumers) || '(ยังไม่มีใครติ๊กแชร์สลิปนี้)' }}
+              </div>
+
+              <div style="margin-top: 4px; font-size: 0.8rem;">
+                <span v-if="(b.slipConsumers || []).length === 0" style="color: #ef4444;">
+                  ⚠️ ยังไม่มีคนติ๊กหาร ยอดเต็ม ฿{{ formatMoney(b.slipAmount) }}
+                </span>
+                <span v-else style="color: #34d399; font-weight: 700;">
+                  หาร {{ (b.slipConsumers || []).length }} คน ➔ ตกคนละ ฿{{ formatMoney(b.slipAmount / ((b.slipConsumers || []).length || 1)) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- PER-SLIP REAL-TIME SUMMARY BOX -->
+            <div style="background: #0f172a; border-radius: 10px; padding: 10px 12px; border: 1px solid #334155;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="pulse-indicator"></span>
+                  <strong style="color: #fbbf24; font-size: 0.85rem;">📊 สรุปสลิปนี้ Real-time (฿{{ formatMoney(b.slipAmount) }})</strong>
+                </div>
+                <span style="font-size: 0.75rem; color: #38bdf8;">คนจ่าย: {{ getPayerName(b.payerId) }}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div v-for="m in room.members" :key="m.id" 
+                     style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: #1e293b; padding: 5px 10px; border-radius: 6px;">
+                  <span style="color: #cbd5e1;">{{ m.avatar }} {{ m.name }} <span v-if="m.id === currentMemberId" style="color: #10b981;">(คุณ)</span></span>
+                  <strong :style="{ color: getMemberBillShare(b, m.id) > 0 ? '#34d399' : '#64748b' }">
+                    {{ getMemberBillShare(b, m.id) > 0 ? `฿${formatMoney(getMemberBillShare(b, m.id))}` : 'ยังไม่หาร (฿0.00)' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===================================== -->
+          <!-- CASE B: ITEMIZED BILL (บิลแจกแจงรายการ) -->
+          <!-- ===================================== -->
+          <div v-else>
+            <!-- Bill Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px;">
+              <div>
+                <span class="badge" :class="b.type === 'alcohol' ? 'badge-alcohol' : (b.type === 'food' ? 'badge-food' : 'badge-round2')" style="margin-bottom: 4px;">
+                  {{ b.type === 'alcohol' ? '🍻 ค่าเหล้า/แอลกอฮอล์' : (b.type === 'food' ? '🍽️ บิลอาหารรอบแรก' : '⚡ สั่งเพิ่มรอบดึก') }}
+                </span>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-top: 2px;">
+                  {{ b.title }}
+                </h3>
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">
+                  💳 <strong style="color: #38bdf8;">{{ getPayerName(b.payerId) }}</strong> จ่ายเงินไปก่อน
+                </div>
+              </div>
+
+              <div style="text-align: right;">
+                <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">
+                  ฿{{ formatMoney(getBillTotal(b)) }}
+                </div>
+                <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;">
+                  <a v-if="b.receiptImage" :href="b.receiptImage" target="_blank" style="color: #38bdf8; font-size: 0.75rem; text-decoration: underline;">
+                    🖼️ ดูรูปบิล
+                  </a>
+                  <button @click="deleteBill(b.id)" style="background: none; border: none; color: #f43f5e; font-size: 0.75rem; cursor: pointer;">
+                    ลบบิล 🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items List -->
+            <div v-if="!b.items || b.items.length === 0" style="text-align: center; padding: 14px 0; color: #64748b; font-size: 0.85rem;">
+              ยังไม่มีรายการในบิลนี้
+            </div>
+
+            <div v-else style="display: flex; flex-direction: column; gap: 10px;">
+              <div v-for="item in b.items" :key="item.id" 
+                   style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px;">
+                
+                <!-- Item Info Row -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span v-if="item.category === 'alcohol'">🍻</span>
+                      <span v-else-if="item.category === 'mixer'">🥤</span>
+                      <span v-else>🍲</span>
+                      <strong style="color: #f8fafc; font-size: 1rem;">{{ item.name }}</strong>
+                      <span v-if="item.qty > 1" style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">(x{{ item.qty }})</span>
+                    </div>
+                    <span style="font-size: 0.75rem; color: #64748b; margin-left: 22px;">
+                      {{ item.category === 'alcohol' ? 'สายดื่ม' : (item.category === 'mixer' ? 'มิกเซอร์' : 'กับแกล้ม/อาหาร') }}
+                    </span>
+                  </div>
+
+                  <div style="text-align: right;">
+                    <div style="font-weight: 800; color: #fbbf24; font-size: 1.1rem;">
+                      ฿{{ formatMoney(item.price) }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #34d399;" v-if="validConsumers(item).length > 0">
+                      ตกคนละ ฿{{ formatMoney(item.price / validConsumers(item).length) }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #94a3b8;" v-else>
+                      (ราคาเต็ม รอคนติ๊ก)
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SINGLE PROMINENT TICK BUTTON FOR CURRENT USER -->
+                <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
+                  <button class="btn" 
+                          :class="isConsumedByMe(item) ? 'btn-success' : 'btn-outline'"
+                          @click="toggleItemConsume(b.id, item.id, currentMemberId)"
+                          style="flex: 1; padding: 10px 14px; font-weight: 700; font-size: 0.95rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="font-size: 1.1rem;">{{ isConsumedByMe(item) ? '✅' : '⚪' }}</span>
+                    <span>{{ isConsumedByMe(item) ? 'ฉันกินอันนี้' : 'แตะถ้าฉันกินอันนี้' }}</span>
+                  </button>
+
+                  <!-- ปุ่มแยกรายการสำหรับคนมาทีหลัง (แสดงเมื่อมีมากกว่า 1 ขวด/จาน) -->
+                  <button v-if="item.qty > 1" @click="openSplitItemModal(b.id, item)" 
+                          style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.75rem; border-radius: 8px; padding: 10px 8px; cursor: pointer; white-space: nowrap;"
+                          title="แยกจำนวนขวดให้คนมาทีหลัง เช่น เบียร์ 22 ขวด แยก 10 ขวดแรกกับ 12 ขวดหลัง">
+                    ✂️ แยกคนมาทีหลัง
+                  </button>
+
+                  <button @click="toggleAllConsumers(b.id, item.id)" 
+                          style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; font-size: 0.75rem; border-radius: 8px; padding: 10px 10px; cursor: pointer; white-space: nowrap;">
+                    {{ validConsumers(item).length === room.members.length ? 'เคลียร์' : 'กินทุกคน' }}
+                  </button>
+                  <button @click="deleteItem(b.id, item.id)" 
+                          style="background: none; border: none; color: #f43f5e; font-size: 0.85rem; cursor: pointer; padding: 4px;">
+                    ✕
+                  </button>
+                </div>
+
+                <!-- Consumers Status Line -->
+                <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 6px 10px; border: 1px dashed #334155; font-size: 0.8rem;">
+                  <div style="color: #94a3b8;">
+                    คนที่กิน: <strong style="color: #38bdf8;">{{ getConsumerNames(item.consumers) || '(ยังไม่มีใครติ๊ก)' }}</strong>
+                  </div>
+                  <div style="margin-top: 2px;">
+                    <span v-if="validConsumers(item).length === 0" style="color: #ef4444; font-size: 0.75rem;">
+                      ⚠️ ยังไม่มีคนติ๊กหารรายการนี้
+                    </span>
+                    <span v-else style="color: #34d399; font-weight: 600; font-size: 0.75rem;">
+                      (หาร {{ validConsumers(item).length }} คน • ตกคนละ ฿{{ formatMoney(item.price / validConsumers(item).length) }})
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- PER-BILL REAL-TIME LIVE SUMMARY BOX (สรุปยอดกินสดของทุกคนในบิลนี้) -->
+            <div style="margin-top: 14px; background: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #334155; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="pulse-indicator"></span>
+                  <strong style="color: #fbbf24; font-size: 0.95rem;">📊 สรุปยอดสด Real-time บิลนี้ (฿{{ formatMoney(getBillTotal(b)) }})</strong>
+                </div>
+                <span style="font-size: 0.75rem; color: #38bdf8;">คนจ่าย: {{ getPayerName(b.payerId) }}</span>
+              </div>
+              <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px;">
+                ⚡ ตัวเลขเปลี่ยนทันทีทุกครั้งเมื่อเพื่อนเข้ามาแตะติ๊กของกิน
+              </p>
+
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div v-for="m in room.members" :key="m.id"
+                     style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>{{ m.avatar }}</span>
+                    <strong style="font-size: 0.85rem; color: #f8fafc;">{{ m.name }}</strong>
+                    <span v-if="m.id === currentMemberId" class="badge badge-food" style="padding: 1px 6px; font-size: 0.65rem;">(คุณ)</span>
+                  </div>
+                  <div style="text-align: right;">
+                    <span v-if="getMemberBillShare(b, m.id) > 0" style="color: #34d399; font-weight: 700; font-size: 0.95rem;">
+                      กินไปแล้ว ฿{{ formatMoney(getMemberBillShare(b, m.id)) }}
+                    </span>
+                    <span v-else style="color: #64748b; font-size: 0.8rem;">
+                      ยังไม่ได้ติ๊ก (฿0.00)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Item Buttons for this Bill -->
+            <div style="margin-top: 10px; display: flex; gap: 8px;">
+              <label class="btn btn-outline" style="flex: 1; padding: 8px; font-size: 0.8rem; cursor: pointer; text-align: center; border-color: #38bdf8; color: #38bdf8;">
+                <span>📸 ถ่ายรูปบิลเพิ่ม (แกะเมนู)</span>
+                <input type="file" accept="image/*" @change="handleQuickPhotoToExistingBill(b.id, $event)" style="display: none;" />
+              </label>
+              <button class="btn btn-outline" @click="openNewItemModal(b.id)" style="padding: 8px 12px; font-size: 0.8rem;">
+                ✏️ พิมพ์เอง
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GRAND TOTAL SUMMARY CARD (สรุปยอดรวมทุกบิล & สลิป) -->
+        <div class="card" v-if="room.bills.length > 0" style="margin-top: 20px; border: 2px solid #10b981; background: linear-gradient(180deg, #1e293b, #0f172a);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: #f8fafc;">
+                💰 สรุปยอดรวมสุทธิ (ทุกบิล & สลิป)
+              </h3>
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                แนบกี่บิลกี่สลิป ระบบก็รวมยอดเงินให้ตรงนี้
+              </span>
+            </div>
+            <button class="btn btn-success" @click="currentTab = 'summary'" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;">
+              ดู QR โอนเงิน ➔
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div v-for="m in room.members" :key="m.id"
+                 style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>{{ m.avatar }}</span>
+                <strong style="color: #f8fafc; font-size: 0.9rem;">{{ m.name }}</strong>
+                <span v-if="m.id === currentMemberId" class="badge badge-food" style="padding: 1px 6px; font-size: 0.65rem;">(คุณ)</span>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 0.75rem; color: #94a3b8; margin-right: 6px;">ยอดที่ต้องจ่าย:</span>
+                <strong style="color: #34d399; font-size: 1.05rem;">
+                  ฿{{ formatMoney(summary?.netBalances[m.id]?.consumedTotal || 0) }}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: สแกนสลิป / OCR (RECEIPT SCANNER) -->
+      <!-- ============================================== -->
+      <div v-if="currentTab === 'scan'" class="card">
+        <h2 style="font-size: 1.2rem; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">
+          📸 สแกนสลิป / ใบเสร็จ
+        </h2>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 16px;">
+          ถ่ายรูปใบเสร็จร้านอาหาร หรือสลิปโอนเงิน ระบบจะอ่านรายการและราคาออกมาให้โดยอัตโนมัติ
+        </p>
+
+        <!-- Step 1: Upload or Paste -->
+        <div v-if="scanStep === 'upload'">
+          <div style="border: 2px dashed #475569; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 20px; background: rgba(30, 41, 59, 0.5);">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📷</div>
+            <strong style="color: #f8fafc; display: block; margin-bottom: 6px;">ถ่ายรูปสลิป หรือเลือกรูปใบเสร็จ</strong>
+            <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 16px;">
+              ระบบจะคัดลอกเมนูจากรูปภาพออกมาให้เพื่อนติ๊กอัตโนมัติ
+            </span>
+            <label class="btn btn-primary" style="display: inline-block; cursor: pointer; padding: 10px 20px;">
+              <span>📂 เลือกรูปถ่ายสลิป / ใบเสร็จ</span>
+              <input type="file" accept="image/*" @change="handleReceiptUpload" style="display: none;" />
+            </label>
+          </div>
+
+          <div v-if="isScanning" style="text-align: center; padding: 20px; background: #0f172a; border-radius: 12px; margin-bottom: 20px;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+            <strong style="color: #38bdf8;">กำลังประมวลผล OCR และแกะรายการ...</strong>
+            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">รอสักครู่ ระบบกำลังอ่านรายการอาหารและราคา</p>
+          </div>
+
+          <!-- Manual Paste -->
+          <div style="border-top: 1px solid #334155; padding-top: 16px;">
+            <h4 style="font-size: 0.9rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">
+              หรือพิมพ์/วางข้อความจากใบเสร็จโดยตรง:
+            </h4>
+            <textarea v-model="manualReceiptText" class="input" rows="4" 
+                      placeholder="ตัวอย่างเช่น:
+เบียร์สิงห์ 3 270
+ต้มยำกุ้ง 1 250
+ข้าวผัดปู 1 120" style="margin-bottom: 10px; font-family: monospace; font-size: 0.85rem;"></textarea>
+            <button class="btn btn-outline" @click="handleParseManualText" style="width: 100%;">
+              ⚡ แปลงข้อความเป็นรายการ
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Review and apply items -->
+        <div v-if="scanStep === 'preview'">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="font-size: 1rem; font-weight: 700; color: #34d399;">
+              ✅ ตรวจสอบรายการที่แกะได้ ({{ parsedOcrItems.length }} รายการ)
+            </h3>
+            <button class="btn btn-outline" @click="scanStep = 'upload'" style="padding: 4px 10px; font-size: 0.75rem;">
+              ย้อนกลับ
+            </button>
+          </div>
+
+          <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+            <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px;">
+              ต้องการนำรายการเหล่านี้ไปใส่ในบิลไหน?
+            </label>
+            <select v-model="scanReceiptTargetBillId" class="input" style="margin-bottom: 10px;">
+              <option value="new">➕ สร้างเป็นบิลใหม่</option>
+              <option v-for="b in room.bills" :key="b.id" :value="b.id">
+                {{ b.title }} (มีอยู่แล้ว)
+              </option>
+            </select>
+
+            <div v-if="scanReceiptTargetBillId === 'new'">
+              <div style="margin-bottom: 8px;">
+                <label style="font-size: 0.75rem; color: #94a3b8;">ชื่อบิลใหม่</label>
+                <input v-model="scanNewBillTitle" class="input" placeholder="เช่น บิลค่าอาหาร หรือ ค่าเหล้าหลังบิลแรก" />
+              </div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 0.75rem; color: #94a3b8;">ประเภทบิล</label>
+                  <select v-model="scanNewBillType" class="input">
+                    <option value="food">🍽️ บิลอาหารรอบแรก</option>
+                    <option value="alcohol">🍻 ค่าเหล้าหลังบิลแรก</option>
+                    <option value="late_drinks">⚡ สั่งเพิ่มรอบดึก</option>
+                  </select>
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 0.75rem; color: #94a3b8;">ใครสำรองจ่าย?</label>
+                  <select v-model="scanNewBillPayerId" class="input">
+                    <option v-for="m in room.members" :key="m.id" :value="m.id">
+                      {{ m.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parsed Items List -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; max-height: 320px; overflow-y: auto;">
+            <div v-for="(item, idx) in parsedOcrItems" :key="item.id"
+                 style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" v-model="item.selected" style="width: 18px; height: 18px; accent-color: #10b981;" />
+              <div style="flex: 1;">
+                <input v-model="item.name" class="input" style="padding: 6px 8px; font-size: 0.85rem; margin-bottom: 4px;" />
+                <div style="display: flex; gap: 6px;">
+                  <select v-model="item.category" class="input" style="padding: 4px; font-size: 0.75rem; width: 110px;">
+                    <option value="food">🍲 อาหาร</option>
+                    <option value="alcohol">🍻 แอลกอฮอล์</option>
+                    <option value="mixer">🥤 มิกเซอร์</option>
+                  </select>
+                  <input v-model.number="item.price" type="number" class="input" placeholder="ราคา" style="padding: 4px; font-size: 0.75rem; width: 80px;" />
+                  <span style="font-size: 0.75rem; color: #94a3b8; align-self: center;">บาท</span>
+                </div>
+              </div>
+              <button @click="removeOcrItem(idx)" style="background: none; border: none; color: #f43f5e; cursor: pointer; padding: 4px;">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button class="btn btn-outline" @click="addManualItemToOcrList" style="flex: 1; padding: 8px; font-size: 0.8rem;">
+              ➕ เพิ่มรายการเองอีก
+            </button>
+          </div>
+
+          <button class="btn btn-success" @click="applyOcrItemsToBill" style="width: 100%; padding: 14px; font-size: 1rem;">
+            💾 บันทึกรายการเข้าโต๊ะ
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: สรุปยอดเงิน & สแกนจ่าย (SETTLEMENT) -->
+      <!-- ============================================== -->
+      <div v-if="currentTab === 'summary'">
+        <!-- Line Summary Share Banner -->
+        <div style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <strong style="color: #34d399; font-size: 0.9rem; display: block;">💬 สรุปยอดส่งเข้าไลน์กลุ่ม</strong>
+            <span style="font-size: 0.75rem; color: #94a3b8;">ก๊อปปี้ข้อความสรุปพร้อมลิงก์ไปวางในแชทได้ทันที</span>
+          </div>
+          <button class="btn btn-success" @click="copyLineSummary" style="padding: 8px 14px; font-size: 0.85rem;">
+            คัดลอก 📋
+          </button>
+        </div>
+
+        <!-- Personal Share Highlight -->
+        <div v-if="summary && currentMember" class="card" style="border: 2px solid #10b981; margin-bottom: 20px; background: linear-gradient(180deg, #1e293b, #0f172a);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 0.85rem; color: #94a3b8;">
+              👤 ยอดเงินของคุณ: <strong style="color: #f8fafc;">{{ currentMember.name }}</strong>
+            </span>
+            <span class="badge badge-food">ยอดสุทธิ</span>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 0.75rem; color: #94a3b8;">ยอดที่คุณกินไปทั้งหมด</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #34d399;">
+              ฿{{ formatMoney(summary.netBalances[currentMember.id]?.consumedTotal || 0) }}
+            </div>
+            <div style="font-size: 0.75rem; color: #64748b;" v-if="summary.netBalances[currentMember.id]?.paidTotal > 0">
+              (คุณสำรองจ่ายไปก่อน ฿{{ formatMoney(summary.netBalances[currentMember.id]?.paidTotal) }})
+            </div>
+          </div>
+
+          <!-- Direct Transfers for Me -->
+          <div style="border-top: 1px solid #334155; padding-top: 12px;">
+            <h4 style="font-size: 0.85rem; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">
+              โอนเงินให้คนสำรองจ่าย:
+            </h4>
+
+            <div>
+              <div v-if="summary.directTransfers.filter(t => t.fromId === currentMember.id).length === 0" style="color: #64748b; font-size: 0.8rem;">
+                🎉 คุณเป็นคนสำรองจ่าย หรือไม่ต้องโอนให้ใคร!
+              </div>
+
+              <div v-for="t in summary.directTransfers.filter(t => t.fromId === currentMember.id)" :key="t.billId + t.toId"
+                   style="background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <div>
+                    <div style="font-size: 0.8rem; color: #94a3b8;">{{ t.billTitle }}</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #38bdf8;">
+                      โอนให้: {{ t.toName }}
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #fbbf24;">
+                      ฿{{ formatMoney(t.amount) }}
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <button class="btn btn-primary" @click="openPromptPayQr(t.toPromptPay, t.amount, t.toName)" style="flex: 1; padding: 8px; font-size: 0.8rem;">
+                    📱 สแกนจ่ายพร้อมเพย์
+                  </button>
+                  <button class="btn" :class="t.isPaid ? 'btn-success' : 'btn-outline'" 
+                          @click="toggleTransferPaid(`${t.fromId}_${t.billId}`)" 
+                          style="padding: 8px 12px; font-size: 0.8rem;">
+                    {{ t.isPaid ? '✅ โอนแล้ว' : 'ติ๊กแจ้งโอน' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Group Summary -->
+        <div class="card" v-if="summary">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-bottom: 12px;">
+            📊 สรุปยอดรวมทุกคนในวง
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div v-for="m in room.members" :key="m.id"
+                 style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.2rem;">{{ m.avatar }}</span>
+                  <strong style="color: #f8fafc; font-size: 0.95rem;">{{ m.name }}</strong>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 0.75rem; color: #94a3b8;">ยอดที่กิน</div>
+                  <div style="font-weight: 700; color: #34d399; font-size: 1rem;">
+                    ฿{{ formatMoney(summary.netBalances[m.id]?.consumedTotal) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transfers details for this member -->
+              <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px dashed #334155; padding-top: 6px; margin-top: 4px;">
+                <div v-if="summary.netBalances[m.id]?.paidTotal > 0" style="color: #38bdf8; margin-bottom: 2px;">
+                  💰 ออกเงินไปก่อน: ฿{{ formatMoney(summary.netBalances[m.id]?.paidTotal) }}
+                </div>
+                <div v-for="t in summary.directTransfers.filter(x => x.fromId === m.id)" :key="t.billId" style="display: flex; justify-content: space-between; margin-top: 2px;">
+                  <span>ต้องโอนให้ {{ t.toName }} ({{ t.billTitle }}):</span>
+                  <span :style="{ color: t.isPaid ? '#10b981' : '#f59e0b', fontWeight: 'bold' }">
+                    ฿{{ formatMoney(t.amount) }} {{ t.isPaid ? '✅ โอนแล้ว' : '⏳ ยังไม่โอน' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: จัดการสมาชิก (MEMBERS) -->
+      <!-- ============================================== -->
+      <div v-if="currentTab === 'members'" class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">
+            👥 เพื่อนร่วมวง ({{ room.members.length }} คน)
+          </h3>
+          <button class="btn btn-primary" @click="addNewMemberPrompt" style="padding: 6px 12px; font-size: 0.8rem;">
+            ➕ เพิ่มเพื่อน
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div v-for="m in room.members" :key="m.id" 
+               style="background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.5rem;">{{ m.avatar }}</span>
+              <div>
+                <strong style="color: #f8fafc; font-size: 0.95rem;">{{ m.name }}</strong>
+                <div style="font-size: 0.75rem; color: #94a3b8;">
+                  พร้อมเพย์: <span style="color: #38bdf8;">{{ m.promptpay || 'ยังไม่ระบุ' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <button v-if="m.id === currentMemberId" class="badge badge-food" style="border: none;">
+              ตัวคุณเอง
+            </button>
+            <button v-else class="btn btn-outline" @click="switchMember(m.id)" style="padding: 4px 10px; font-size: 0.75rem;">
+              สลับเป็นคนนี้
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 1: แนบสลิปโอนเงินก้อน (LUMP-SUM SLIP MODAL) -->
+    <!-- ============================================== -->
+    <div v-if="showNewSlipModal" class="modal-overlay" @click.self="showNewSlipModal = false">
+      <div class="modal-content">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">
+          ⚡ แนบสลิปโอนเงินก้อน
+        </h3>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 14px;">
+          สำหรับโอนเงินจ่ายร้านไปเลย (เช่น สั่งเบียร์เพิ่ม, ค่าเหล้า, ค่าน้ำแข็ง)
+        </p>
+
+        <!-- Slip Photo Upload -->
+        <div style="margin-bottom: 14px;">
+          <label class="btn btn-outline" style="width: 100%; padding: 10px; cursor: pointer; text-align: center; border-color: #8b5cf6; color: #c084fc; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📷 แนบรูปถ่ายสลิปโอนเงิน (ไม่บังคับ)</span>
+            <input type="file" accept="image/*" @change="handleSlipImageUpload" style="display: none;" />
+          </label>
+          <div v-if="slipImagePreview" style="margin-top: 8px; text-align: center;">
+            <img :src="slipImagePreview" alt="Slip preview" style="max-height: 120px; border-radius: 8px; border: 1px solid #475569;" />
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">ชื่อสลิป / รอบ</label>
+          <input v-model="newSlipForm.title" class="input" placeholder="เช่น สลิปค่าเบียร์ทาวเวอร์, ค่าเหล้าสั่งเพิ่ม" />
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.85rem; color: #fbbf24; font-weight: 700; margin-bottom: 4px;">ยอดเงินที่โอนจ่ายไป (บาท)</label>
+          <input v-model.number="newSlipForm.amount" type="number" class="input" placeholder="เช่น 850" style="font-size: 1.2rem; font-weight: 800; color: #fbbf24;" />
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">ใครเป็นคนโอนเงินจ่ายไปก่อน?</label>
+          <select v-model="newSlipForm.payerId" class="input">
+            <option v-for="m in room.members" :key="m.id" :value="m.id">
+              {{ m.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Tag Selection: What was paid? (พิมพ์ค้นหาหรือระบุได้ทันที) -->
+        <div style="margin-bottom: 14px; background: #0f172a; padding: 12px; border-radius: 12px; border: 1px solid #334155;">
+          <label style="display: block; font-size: 0.85rem; color: #fbbf24; font-weight: 700; margin-bottom: 6px;">
+            🔍 สลิปนี้จ่ายค่าอะไรไป? (พิมพ์ค้นหา / ระบุคำได้ทันที):
+          </label>
+          
+          <div style="position: relative; margin-bottom: 10px;">
+            <input v-model="slipSearchOrCustomTag" class="input" 
+                   placeholder="พิมพ์ค้นหาหรือระบุ เช่น เบียร์, น้ำแข็ง, เหล้า..." 
+                   @keyup.enter="addCustomSlipTag" 
+                   style="padding-right: 85px; font-size: 0.9rem;" />
+            <button type="button" class="btn btn-primary" @click="addCustomSlipTag" 
+                    style="position: absolute; right: 4px; top: 4px; bottom: 4px; padding: 4px 10px; font-size: 0.75rem;">
+              + เพิ่มคำนี้
+            </button>
+          </div>
+
+          <span style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px;">
+            แตะเลือกคำสำเร็จรูปด่วน:
+          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+            <button v-for="tag in filteredAvailableSlipTags" :key="tag" type="button"
+                    class="badge"
+                    :style="{ 
+                      background: newSlipForm.tags.includes(tag) ? '#10b981' : '#1e293b', 
+                      color: newSlipForm.tags.includes(tag) ? 'white' : '#cbd5e1', 
+                      border: newSlipForm.tags.includes(tag) ? '1px solid #10b981' : '1px solid #475569', 
+                      padding: '6px 10px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }"
+                    @click="toggleSlipTag(tag)">
+              {{ newSlipForm.tags.includes(tag) ? '✅' : '⚪' }} {{ tag }}
+            </button>
+          </div>
+
+          <!-- Active tags display -->
+          <div v-if="newSlipForm.tags.length > 0" style="border-top: 1px dashed #334155; padding-top: 8px;">
+            <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">สิ่งที่ระบุในสลิปนี้:</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <span v-for="(t, idx) in newSlipForm.tags" :key="t" class="badge" style="background: #8b5cf6; color: white; padding: 4px 8px; font-size: 0.8rem;">
+                {{ t }} <span @click.stop="newSlipForm.tags.splice(idx, 1)" style="cursor: pointer; margin-left: 4px; font-weight: bold;">✕</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Who was there / Consumers -->
+        <div style="margin-bottom: 18px; border-top: 1px dashed #334155; padding-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 0.85rem; color: #94a3b8;">
+              ใครร่วมหารสลิปนี้:
+            </label>
+            <div style="display: flex; gap: 4px;">
+              <button type="button" @click="newSlipForm.consumers = room.members.map(m => m.id)" style="background: #334155; border: none; color: #cbd5e1; font-size: 0.7rem; border-radius: 6px; padding: 3px 8px; cursor: pointer;">
+                ทุกคน
+              </button>
+              <button type="button" @click="newSlipForm.consumers = []" style="background: #334155; border: none; color: #f43f5e; font-size: 0.7rem; border-radius: 6px; padding: 3px 8px; cursor: pointer;">
+                ให้เพื่อนมาติ๊กเอง
+              </button>
+            </div>
+          </div>
+          <p style="font-size: 0.75rem; color: #34d399; margin-bottom: 8px;">
+            💡 คนจ่ายบันทึกไว้ได้เลย แล้วเพื่อนคนอื่นเข้ามาแตะติ๊กชื่อตัวเองทีหลังได้ครับ
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <div v-for="m in room.members" :key="m.id"
+                 class="consumer-chip"
+                 :class="{ active: newSlipForm.consumers.includes(m.id) }"
+                 @click="newSlipForm.consumers.includes(m.id) ? newSlipForm.consumers.splice(newSlipForm.consumers.indexOf(m.id), 1) : newSlipForm.consumers.push(m.id)">
+              <span>{{ newSlipForm.consumers.includes(m.id) ? '✅' : '⚪' }}</span>
+              <span>{{ m.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" @click="showNewSlipModal = false" style="flex: 1;">ยกเลิก</button>
+          <button class="btn btn-success" @click="submitNewSlip" style="flex: 1;">บันทึกสลิปนี้ 💾</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 2: เพิ่มบิลแจกแจงรายการ (NEW ITEMIZED BILL MODAL) -->
+    <!-- ============================================== -->
+    <div v-if="showNewBillModal" class="modal-overlay" @click.self="showNewBillModal = false">
+      <div class="modal-content">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #fbbf24; margin-bottom: 14px;">
+          ➕ เพิ่มบิลแจกแจงเมนู
+        </h3>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ชื่อบิล / รอบ</label>
+          <input v-model="newBillForm.title" class="input" placeholder="เช่น บิลอาหารหัวค่ำ, บิลเปิดโต๊ะ" />
+        </div>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ประเภทของบิลนี้</label>
+          <select v-model="newBillForm.type" class="input">
+            <option value="food">🍽️ บิลค่าอาหาร / เปิดโต๊ะ</option>
+            <option value="alcohol">🍻 ค่าเหล้า / แอลกอฮอล์</option>
+            <option value="late_drinks">⚡ สั่งเพิ่มรอบดึก</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ใครเป็นคนจ่ายเงินบิลนี้ไปก่อน?</label>
+          <select v-model="newBillForm.payerId" class="input">
+            <option v-for="m in room.members" :key="m.id" :value="m.id">
+              {{ m.name }}
+            </option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" @click="showNewBillModal = false" style="flex: 1;">ยกเลิก</button>
+          <button class="btn btn-primary" @click="submitNewBill" style="flex: 1;">สร้างบิล</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 3: เพิ่มรายการในบิล (NEW ITEM MODAL) -->
+    <!-- ============================================== -->
+    <div v-if="showNewItemModal" class="modal-overlay" @click.self="showNewItemModal = false">
+      <div class="modal-content">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #f8fafc; margin-bottom: 14px;">
+          ➕ เพิ่มรายการอาหาร/เครื่องดื่ม
+        </h3>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ชื่อเมนู</label>
+          <input v-model="newItemForm.name" class="input" placeholder="เช่น เบียร์สิงห์ทาวเวอร์, ข้าวผัด, เอ็นไก่ทอด" />
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <div style="flex: 2;">
+            <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ราคา (บาท)</label>
+            <input v-model.number="newItemForm.price" type="number" class="input" placeholder="เช่น 240" />
+          </div>
+          <div style="flex: 1;">
+            <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">จำนวน</label>
+            <input v-model.number="newItemForm.qty" type="number" class="input" />
+          </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">หมวดหมู่</label>
+          <select v-model="newItemForm.category" class="input">
+            <option value="food">🍲 อาหาร / กับแกล้ม</option>
+            <option value="alcohol">🍻 เหล้า / เบียร์ (แอลกอฮอล์)</option>
+            <option value="mixer">🥤 มิกเซอร์ / น้ำแข็ง / น้ำเปล่า</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" @click="showNewItemModal = false" style="flex: 1;">ยกเลิก</button>
+          <button class="btn btn-primary" @click="submitNewItem" style="flex: 1;">เพิ่มรายการ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 4: PROMPTPAY QR MODAL -->
+    <!-- ============================================== -->
+    <div v-if="showQrModal" class="modal-overlay" @click.self="showQrModal = false">
+      <div class="modal-content" style="text-align: center;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #f8fafc; margin-bottom: 4px;">
+          📱 สแกนจ่ายด้วย PromptPay
+        </h3>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 16px;">
+          โอนให้: <strong style="color: #38bdf8;">{{ qrData.toName }}</strong> ({{ qrData.account }})
+        </p>
+
+        <div style="background: white; padding: 16px; border-radius: 16px; display: inline-block; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+          <img :src="qrData.qrUrl" alt="PromptPay QR" style="width: 240px; height: 240px; display: block;" />
+        </div>
+
+        <div style="font-size: 1.6rem; font-weight: 800; color: #fbbf24; margin-bottom: 16px;">
+          ฿{{ formatMoney(qrData.amount) }}
+        </div>
+
+        <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 16px;">
+          เปิดแอปธนาคารของคุณ (K PLUS, SCB EASY, Krungthai NEXT ฯลฯ) แล้วสแกนจ่ายได้เลย ยอดเงินจะขึ้นให้อัตโนมัติ!
+        </p>
+
+        <button class="btn btn-success" @click="showQrModal = false" style="width: 100%; padding: 12px;">
+          ✅ เข้าใจแล้ว ปิดหน้านี้
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 5: แยกรายการ (คนกินไม่กี่ขวด / คนมาทีหลัง) -->
+    <!-- ============================================== -->
+    <div v-if="showSplitModal" class="modal-overlay" @click.self="showSplitModal = false">
+      <div class="modal-content" v-if="splitTargetItem">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">
+          ✂️ แยกรายการ (คนกินไม่กี่ขวด / คนมาทีหลัง)
+        </h3>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">
+          แก้ปัญหาคนกินน้อยกลัวโดนหารเต็ม หรือคนมาทีหลังได้กินแค่ช่วงหลัง
+        </p>
+
+        <!-- Mode Switcher Tabs -->
+        <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+          <button class="btn" :class="splitMode === 'personal' ? 'btn-primary' : 'btn-outline'" 
+                  @click="splitMode = 'personal'; updateSplitNames()" style="flex: 1; padding: 8px 6px; font-size: 0.8rem;">
+            🍺 ฉันกินไม่กี่ขวด (แยกขวดฉัน)
+          </button>
+          <button class="btn" :class="splitMode === 'period' ? 'btn-primary' : 'btn-outline'" 
+                  @click="splitMode = 'period'; updateSplitNames()" style="flex: 1; padding: 8px 6px; font-size: 0.8rem;">
+            👥 แยกช่วงเวลา (คนมาทีหลัง)
+          </button>
+        </div>
+
+        <div style="background: #0f172a; border-radius: 10px; padding: 12px; margin-bottom: 14px; border: 1px solid #334155;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 1rem;">{{ splitTargetItem.name }}</strong>
+            <span style="color: #fbbf24; font-weight: 800; font-size: 1.1rem;">฿{{ formatMoney(splitTargetItem.price) }}</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 2px;">
+            มีทั้งหมด {{ splitTargetItem.qty }} ชิ้น (ตกชิ้นละ ฿{{ formatMoney(splitTargetItem.price / splitTargetItem.qty) }})
+          </span>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: #38bdf8; font-weight: 700; margin-bottom: 6px;">
+            <span v-if="splitMode === 'personal'">🍺 คุณ ({{ currentMember?.name }}) กิน/ดื่มไปกี่ชิ้น/กี่ขวด?</span>
+            <span v-else>🍺 แบ่งให้รอบหลัง (ที่คนมาทีหลังร่วมดื่มด้วย) กี่ชิ้น/ขวด?</span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input v-model.number="splitQtyInput" @input="updateSplitNames" type="range" :min="1" :max="splitTargetItem.qty - 1" class="input" style="flex: 1; accent-color: #f59e0b;" />
+            <input v-model.number="splitQtyInput" @input="updateSplitNames" type="number" :min="1" :max="splitTargetItem.qty - 1" class="input" style="width: 70px; text-align: center; font-size: 1.1rem; font-weight: 700; color: #fbbf24;" />
+            <span style="font-size: 0.85rem; color: #cbd5e1;">ชิ้น</span>
+          </div>
+        </div>
+
+        <!-- Live Preview of the Split -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <!-- Card 1 -->
+          <div style="background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="color: #f8fafc; font-size: 0.85rem;">
+                  {{ splitMode === 'personal' ? '1️⃣ ส่วนที่เหลือในโต๊ะ:' : '1️⃣ รอบแรก (ก่อนเพื่อนมา):' }}
+                </strong>
+                <span style="display: block; font-size: 0.75rem; color: #94a3b8;">
+                  {{ splitTargetItem.qty - splitQtyInput }} ชิ้น • {{ splitMode === 'personal' ? 'เพื่อนที่เหลือหารกันต่อ' : 'เพื่อนกลุ่มเดิมหาร' }}
+                </span>
+              </div>
+              <strong style="color: #34d399; font-size: 1rem;">
+                ฿{{ formatMoney((splitTargetItem.price / splitTargetItem.qty) * (splitTargetItem.qty - splitQtyInput)) }}
+              </strong>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 8px; padding: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="color: #fbbf24; font-size: 0.85rem;">
+                  {{ splitMode === 'personal' ? `2️⃣ ส่วนของคุณ (${currentMember?.name}):` : '2️⃣ รอบสอง (คนมาทีหลังร่วมดื่ม):' }}
+                </strong>
+                <span style="display: block; font-size: 0.75rem; color: #94a3b8;">
+                  {{ splitQtyInput }} ชิ้น • {{ splitMode === 'personal' ? 'คุณจ่ายเฉพาะส่วนนี้คนเดียว ไม่หารเต็ม!' : 'ทุกคนรวมคนมาทีหลังร่วมหาร' }}
+                </span>
+              </div>
+              <strong style="color: #fbbf24; font-size: 1rem;">
+                ฿{{ formatMoney((splitTargetItem.price / splitTargetItem.qty) * splitQtyInput) }}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-outline" @click="showSplitModal = false" style="flex: 1;">ยกเลิก</button>
+          <button class="btn btn-primary" @click="submitSplitItem" style="flex: 1; padding: 12px; font-weight: 700;">
+            ✂️ ตกลงแยกรายการ
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

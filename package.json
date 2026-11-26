@@ -1,0 +1,29 @@
+{
+  "name": "hangout-bill-splitter",
+  "version": "1.0.0",
+  "description": "เว็บแอปหารเงินวงเหล้าและปาร์ตี้ สแกนสลิป แยกบิลเหล้า/อาหาร ติ๊กของกิน Real-time",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "node server/index.js",
+    "start": "node server/index.js"
+  },
+  "keywords": [
+    "bill-splitter",
+    "hangout",
+    "party",
+    "realtime",
+    "ocr"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "multer": "^2.5.0",
+    "promptpay-qr": "^0.5.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.4",
+    "tesseract.js": "^7.0.0",
+    "vue": "^3.5.46"
+  }
+}

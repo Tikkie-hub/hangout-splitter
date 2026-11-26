@@ -1,0 +1,993 @@
+{
+  "WR67JQ": {
+    "id": "WR67JQ",
+    "name": "วงเหล้าทดสอบ",
+    "createdAt": "2026-11-26T20:21:38.595Z",
+    "members": [
+      {
+        "id": "mem_9shv34oj",
+        "name": "พี่บอย",
+        "promptpay": "0812345678",
+        "avatar": "🍻",
+        "isHost": true
+      }
+    ],
+    "bills": [],
+    "transfersPaid": {}
+  },
+  "LU9MQB": {
+    "id": "LU9MQB",
+    "name": "ทดสอบสลิปและค้นหา",
+    "createdAt": "2026-11-26T20:31:01.916Z",
+    "members": [
+      {
+        "id": "mem_btjj51f1",
+        "name": "บอย",
+        "promptpay": "0812345678",
+        "avatar": "🍻",
+        "isHost": true
+      }
+    ],
+    "bills": [],
+    "transfersPaid": {}
+  },
+  "AF0SA8": {
+    "id": "AF0SA8",
+    "name": "วงเหล้าคืนนี้ 🍻",
+    "createdAt": "2026-11-26T20:32:12.932Z",
+    "members": [
+      {
+        "id": "mem_r500a6wc",
+        "name": "นานะ",
+        "promptpay": "6330518688",
+        "avatar": "🍻",
+        "isHost": true
+      }
+    ],
+    "bills": [
+      {
+        "id": "bill_t305jg18",
+        "title": "บิลร้านอาหาร (13 รายการ) 🧾",
+        "type": "food",
+        "payerId": "mem_bpihlcit",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "item_1",
+            "name": "ส้มตำปูปลาร้า",
+            "qty": 1,
+            "price": 49,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_2",
+            "name": "เส้นลวก",
+            "qty": 1,
+            "price": 20,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_3",
+            "name": "ข้าวผัดทะเล",
+            "qty": 2,
+            "price": 178,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_4",
+            "name": "ลาบทอด",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_5",
+            "name": "ก้อยดิบ ขม/เปรี้ยว",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_6",
+            "name": "ยำวุ้นเส้นหมูสับ",
+            "qty": 1,
+            "price": 109,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_7",
+            "name": "ลาบหมูคั่วเหนือ",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_8",
+            "name": "เฟรนฟราย",
+            "qty": 2,
+            "price": 118,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_9",
+            "name": "ยำแมงกะพรุนน้ำมันงา",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_10",
+            "name": "ต้มแซ่บเล้ง",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_11",
+            "name": "เอ็นไก่ทอด",
+            "qty": 2,
+            "price": 158,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_12",
+            "name": "Singha เบียร์สิงห์ (22 ขวด)",
+            "qty": 22,
+            "price": 1760,
+            "category": "alcohol",
+            "consumers": []
+          },
+          {
+            "id": "item_13",
+            "name": "ICE (น้ำแข็ง) ใหญ่",
+            "qty": 1,
+            "price": 20,
+            "category": "mixer",
+            "consumers": []
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": "/uploads/1795726036776-702298844.jpg",
+        "createdAt": "2026-11-26T20:47:16.873Z"
+      },
+      {
+        "id": "bill_zij76gtq",
+        "title": "บิลร้านอาหาร (13 รายการ) 🧾",
+        "type": "food",
+        "payerId": "mem_bpihlcit",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "item_1",
+            "name": "ส้มตำปูปลาร้า",
+            "qty": 1,
+            "price": 49,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_2",
+            "name": "เส้นลวก",
+            "qty": 1,
+            "price": 20,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_3",
+            "name": "ข้าวผัดทะเล",
+            "qty": 2,
+            "price": 178,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_4",
+            "name": "ลาบทอด",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_5",
+            "name": "ก้อยดิบ ขม/เปรี้ยว",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_6",
+            "name": "ยำวุ้นเส้นหมูสับ",
+            "qty": 1,
+            "price": 109,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_7",
+            "name": "ลาบหมูคั่วเหนือ",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_8",
+            "name": "เฟรนฟราย",
+            "qty": 2,
+            "price": 118,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_9",
+            "name": "ยำแมงกะพรุนน้ำมันงา",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_10",
+            "name": "ต้มแซ่บเล้ง",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_11",
+            "name": "เอ็นไก่ทอด",
+            "qty": 2,
+            "price": 158,
+            "category": "food",
+            "consumers": []
+          },
+          {
+            "id": "item_12",
+            "name": "Singha เบียร์สิงห์ (22 ขวด)",
+            "qty": 22,
+            "price": 1760,
+            "category": "alcohol",
+            "consumers": []
+          },
+          {
+            "id": "item_13",
+            "name": "ICE (น้ำแข็ง) ใหญ่",
+            "qty": 1,
+            "price": 20,
+            "category": "mixer",
+            "consumers": []
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": "/uploads/1795726072921-734500260.jpg",
+        "createdAt": "2026-11-26T20:47:52.946Z"
+      }
+    ],
+    "transfersPaid": {}
+  },
+  "O6VZTA": {
+    "id": "O6VZTA",
+    "name": "วงเหล้าวันศุกร์หรรษา 🍻",
+    "createdAt": "2026-11-26T20:41:38.926Z",
+    "members": [
+      {
+        "id": "mem_bpihlcit",
+        "name": "พี่บอย (คนจ่ายบิลแรก)",
+        "promptpay": "0812345678",
+        "avatar": "🍻",
+        "isHost": true
+      },
+      {
+        "id": "mem_d9jzdqm9",
+        "name": "ไอ้นัท (สายดื่ม)",
+        "promptpay": "0899999999",
+        "avatar": "🍻",
+        "isHost": false
+      },
+      {
+        "id": "mem_w6376zjh",
+        "name": "เจน (ไม่ดื่มเหล้า)",
+        "promptpay": "",
+        "avatar": "🥤",
+        "isHost": false
+      },
+      {
+        "id": "mem_qc75t6q6",
+        "name": "ตั้ม (มาทีหลังรอบสอง)",
+        "promptpay": "",
+        "avatar": "⏰",
+        "isHost": false
+      }
+    ],
+    "bills": [
+      {
+        "id": "bill_67z8vxi4",
+        "title": "บิล 1: อาหารและเปิดโต๊ะหัวค่ำ 🍽️",
+        "type": "food",
+        "payerId": "mem_bpihlcit",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "i1",
+            "name": "ข้าวผัดปูจานใหญ่",
+            "price": 250,
+            "qty": 1,
+            "category": "food",
+            "consumers": [
+              "mem_bpihlcit",
+              "mem_d9jzdqm9",
+              "mem_w6376zjh"
+            ]
+          },
+          {
+            "id": "i2",
+            "name": "ต้มยำรวมมิตรหม้อไฟ",
+            "price": 280,
+            "qty": 1,
+            "category": "food",
+            "consumers": [
+              "mem_bpihlcit",
+              "mem_d9jzdqm9",
+              "mem_w6376zjh"
+            ]
+          },
+          {
+            "id": "i3",
+            "name": "เอ็นไก่ทอด",
+            "price": 120,
+            "qty": 2,
+            "category": "food",
+            "consumers": [
+              "mem_bpihlcit",
+              "mem_d9jzdqm9"
+            ]
+          },
+          {
+            "id": "i4",
+            "name": "แสงโสม 1 กลม (เปิดโต๊ะ)",
+            "price": 420,
+            "qty": 1,
+            "category": "alcohol",
+            "consumers": [
+              "mem_bpihlcit",
+              "mem_d9jzdqm9"
+            ]
+          },
+          {
+            "id": "i5",
+            "name": "มิกเซอร์ โซดา+น้ำแข็ง",
+            "price": 150,
+            "qty": 1,
+            "category": "mixer",
+            "consumers": [
+              "mem_bpihlcit",
+              "mem_d9jzdqm9"
+            ]
+          },
+          {
+            "id": "i6",
+            "name": "โค้กกระป๋อง (ของเจน)",
+            "price": 35,
+            "qty": 2,
+            "category": "mixer",
+            "consumers": [
+              "mem_w6376zjh"
+            ]
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": null,
+        "createdAt": "2026-11-26T20:41:39.880Z"
+      },
+      {
+        "id": "bill_35khiad2",
+        "title": "สลิปโอน: ค่าเบียร์ทาวเวอร์ + น้ำแข็ง (รอบดึก) 🍻",
+        "type": "slip",
+        "payerId": "mem_d9jzdqm9",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [],
+        "isSlip": true,
+        "slipAmount": 550,
+        "slipTags": [
+          "🍺 ค่าเบียร์",
+          "🧊 ค่าน้ำแข็ง"
+        ],
+        "slipConsumers": [
+          "mem_bpihlcit",
+          "mem_d9jzdqm9",
+          "mem_qc75t6q6"
+        ],
+        "receiptImage": null,
+        "createdAt": "2026-11-26T20:41:40.331Z"
+      }
+    ],
+    "transfersPaid": {}
+  },
+  "HJD14K": {
+    "id": "HJD14K",
+    "name": "วงเหล้าคืนนี้ 🍻",
+    "createdAt": "2026-11-26T20:55:19.498Z",
+    "members": [
+      {
+        "id": "mem_o2j3v6of",
+        "name": "นานะ",
+        "promptpay": "",
+        "avatar": "🍻",
+        "isHost": true
+      },
+      {
+        "id": "mem_pdurqvsc",
+        "name": "ติ๊ก",
+        "promptpay": "",
+        "avatar": "🍺",
+        "isHost": false
+      },
+      {
+        "id": "mem_jlyvlunb",
+        "name": "เพลง",
+        "promptpay": "",
+        "avatar": "🍺",
+        "isHost": false
+      },
+      {
+        "id": "mem_4h8ewkxh",
+        "name": "มาย",
+        "promptpay": "",
+        "avatar": "🍺",
+        "isHost": false
+      }
+    ],
+    "bills": [
+      {
+        "id": "bill_0fl97zlb",
+        "title": "บิลร้านอาหาร (13 รายการ) 🧾",
+        "type": "food",
+        "payerId": "mem_o2j3v6of",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "item_1",
+            "name": "ส้มตำปูปลาร้า",
+            "qty": 1,
+            "price": 49,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_2",
+            "name": "เส้นลวก",
+            "qty": 1,
+            "price": 20,
+            "category": "food",
+            "consumers": [
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_3",
+            "name": "ข้าวผัดทะเล",
+            "qty": 2,
+            "price": 178,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of"
+            ]
+          },
+          {
+            "id": "item_4",
+            "name": "ลาบทอด",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_5",
+            "name": "ก้อยดิบ ขม/เปรี้ยว",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_6",
+            "name": "ยำวุ้นเส้นหมูสับ",
+            "qty": 1,
+            "price": 109,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_7",
+            "name": "ลาบหมูคั่วเหนือ",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_8",
+            "name": "เฟรนฟราย",
+            "qty": 2,
+            "price": 118,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_9",
+            "name": "ยำแมงกะพรุนน้ำมันงา",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_10",
+            "name": "ต้มแซ่บเล้ง",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_11",
+            "name": "เอ็นไก่ทอด",
+            "qty": 2,
+            "price": 158,
+            "category": "food",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_12",
+            "name": "Singha เบียร์สิงห์ (22 ขวด)",
+            "qty": 22,
+            "price": 1760,
+            "category": "alcohol",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          },
+          {
+            "id": "item_13",
+            "name": "ICE (น้ำแข็ง) ใหญ่",
+            "qty": 1,
+            "price": 20,
+            "category": "mixer",
+            "consumers": [
+              "mem_o2j3v6of",
+              "mem_pdurqvsc",
+              "mem_jlyvlunb",
+              "mem_4h8ewkxh"
+            ]
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": "/uploads/1795728974347-478359699.jpg",
+        "createdAt": "2026-11-26T21:36:14.374Z"
+      }
+    ],
+    "transfersPaid": {
+      "mem_4h8ewkxh_bill_0fl97zlb": false
+    }
+  },
+  "0WLLOM": {
+    "id": "0WLLOM",
+    "name": "วงเหล้าคืนนี้ 🍻",
+    "createdAt": "2026-11-26T21:00:47.163Z",
+    "members": [
+      {
+        "id": "mem_iihhamdm",
+        "name": "นานะ",
+        "promptpay": "6330518688",
+        "avatar": "🍻",
+        "isHost": true
+      },
+      {
+        "id": "mem_m5y08tny",
+        "name": "ติ๊ก",
+        "promptpay": "",
+        "avatar": "🍺",
+        "isHost": false
+      }
+    ],
+    "bills": [
+      {
+        "id": "bill_crhob5ik",
+        "title": "บิลร้านอาหาร (13 รายการ) 🧾",
+        "type": "food",
+        "payerId": "mem_iihhamdm",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "item_1",
+            "name": "ส้มตำปูปลาร้า",
+            "qty": 1,
+            "price": 49,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_2",
+            "name": "เส้นลวก",
+            "qty": 1,
+            "price": 20,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_3",
+            "name": "ข้าวผัดทะเล",
+            "qty": 2,
+            "price": 178,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_4",
+            "name": "ลาบทอด",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_5",
+            "name": "ก้อยดิบ ขม/เปรี้ยว",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_6",
+            "name": "ยำวุ้นเส้นหมูสับ",
+            "qty": 1,
+            "price": 109,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_7",
+            "name": "ลาบหมูคั่วเหนือ",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_8",
+            "name": "เฟรนฟราย",
+            "qty": 2,
+            "price": 118,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_9",
+            "name": "ยำแมงกะพรุนน้ำมันงา",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_10",
+            "name": "ต้มแซ่บเล้ง",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_11",
+            "name": "เอ็นไก่ทอด",
+            "qty": 2,
+            "price": 158,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_12",
+            "name": "Singha เบียร์สิงห์ (22 ขวด)",
+            "qty": 22,
+            "price": 1760,
+            "category": "alcohol",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          },
+          {
+            "id": "item_13",
+            "name": "ICE (น้ำแข็ง) ใหญ่",
+            "qty": 1,
+            "price": 20,
+            "category": "mixer",
+            "consumers": [
+              "mem_iihhamdm"
+            ]
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": "/uploads/1795726863298-570904743.jpg",
+        "createdAt": "2026-11-26T21:01:03.333Z"
+      },
+      {
+        "id": "bill_udycz2a9",
+        "title": "บิลร้านอาหาร (13 รายการ) 🧾",
+        "type": "food",
+        "payerId": "mem_m5y08tny",
+        "serviceCharge": 0,
+        "vat": 0,
+        "discount": 0,
+        "items": [
+          {
+            "id": "item_1",
+            "name": "ส้มตำปูปลาร้า",
+            "qty": 1,
+            "price": 49,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_2",
+            "name": "เส้นลวก",
+            "qty": 1,
+            "price": 20,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_3",
+            "name": "ข้าวผัดทะเล",
+            "qty": 2,
+            "price": 178,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_4",
+            "name": "ลาบทอด",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_5",
+            "name": "ก้อยดิบ ขม/เปรี้ยว",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_6",
+            "name": "ยำวุ้นเส้นหมูสับ",
+            "qty": 1,
+            "price": 109,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_7",
+            "name": "ลาบหมูคั่วเหนือ",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_8",
+            "name": "เฟรนฟราย",
+            "qty": 2,
+            "price": 118,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_9",
+            "name": "ยำแมงกะพรุนน้ำมันงา",
+            "qty": 1,
+            "price": 99,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_10",
+            "name": "ต้มแซ่บเล้ง",
+            "qty": 1,
+            "price": 129,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_11",
+            "name": "เอ็นไก่ทอด",
+            "qty": 2,
+            "price": 158,
+            "category": "food",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_12",
+            "name": "Singha เบียร์สิงห์ (22 ขวด)",
+            "qty": 22,
+            "price": 1760,
+            "category": "alcohol",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          },
+          {
+            "id": "item_13",
+            "name": "ICE (น้ำแข็ง) ใหญ่",
+            "qty": 1,
+            "price": 20,
+            "category": "mixer",
+            "consumers": [
+              "mem_iihhamdm",
+              "mem_m5y08tny"
+            ]
+          }
+        ],
+        "isSlip": false,
+        "slipAmount": 0,
+        "slipTags": [],
+        "slipConsumers": [],
+        "receiptImage": "/uploads/1795726916354-788579352.jpg",
+        "createdAt": "2026-11-26T21:01:56.369Z"
+      }
+    ],
+    "transfersPaid": {}
+  }
+}
