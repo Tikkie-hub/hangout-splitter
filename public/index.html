@@ -377,8 +377,11 @@
                 <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">
                   ฿{{ formatMoney(getBillTotal(b)) }}
                 </div>
-                <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;">
-                  <a v-if="b.receiptImage" :href="b.receiptImage" target="_blank" style="color: #38bdf8; font-size: 0.75rem; text-decoration: underline;">
+                <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; flex-wrap: wrap;">
+                  <button @click="resetBillToNomad(b.id)" class="btn btn-outline" style="font-size: 0.72rem; padding: 4px 8px; border-color: #38bdf8; color: #38bdf8;" title="รวมการ์ดที่แตกซ้ำให้กลับเป็น 13 รายการดั้งเดิม">
+                    🔄 รวมบิลเดิม 13 รายการ (แก้การ์ดซ้ำ)
+                  </button>
+                  <a v-if="b.receiptImage" :href="b.receiptImage" target="_blank" style="color: #38bdf8; font-size: 0.75rem; text-decoration: underline; align-self: center;">
                     🖼️ ดูรูปบิล
                   </a>
                   <button @click="deleteBill(b.id)" style="background: none; border: none; color: #f43f5e; font-size: 0.75rem; cursor: pointer;">
@@ -425,21 +428,33 @@
                   </div>
                 </div>
 
-                <!-- SINGLE PROMINENT TICK BUTTON FOR CURRENT USER -->
+                <!-- SINGLE PROMINENT TICK BUTTON / CUSTOM QTY BUTTON -->
                 <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
-                  <button class="btn" 
+                  <!-- ถ้าเราระบุจำนวนไว้แล้ว เช่น กิน 2 ขวด -->
+                  <button v-if="getMyCustomQty(item) > 0" 
+                          class="btn" 
+                          @click="openCustomQtyModal(b.id, item)"
+                          style="flex: 1; padding: 10px 12px; font-weight: 700; font-size: 0.9rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; color: #fbbf24;">
+                    <span style="font-size: 1.1rem;">🍺</span>
+                    <span>ฉันกิน {{ getMyCustomQty(item) }} ชิ้น (฿{{ formatMoney(getMyCustomQty(item) * (item.price / (item.qty || 1))) }}) • แก้ไข</span>
+                  </button>
+
+                  <!-- ถ้ากินปกติ (หารเท่า) หรือ ยังไม่ได้ติ๊ก -->
+                  <button v-else 
+                          class="btn" 
                           :class="isConsumedByMe(item) ? 'btn-success' : 'btn-outline'"
                           @click="toggleItemConsume(b.id, item.id, currentMemberId)"
                           style="flex: 1; padding: 10px 14px; font-weight: 700; font-size: 0.95rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span style="font-size: 1.1rem;">{{ isConsumedByMe(item) ? '✅' : '⚪' }}</span>
-                    <span>{{ isConsumedByMe(item) ? 'ฉันกินอันนี้' : 'แตะถ้าฉันกินอันนี้' }}</span>
+                    <span>{{ isConsumedByMe(item) ? 'ฉันกินอันนี้ (หารเท่า)' : 'แตะถ้าฉันกินอันนี้' }}</span>
                   </button>
 
-                  <!-- ปุ่มแยกรายการ (แสดงทุกรายการ ให้ทุกคนแยกกินได้อิสระ) -->
-                  <button @click="openSplitItemModal(b.id, item)" 
-                          style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.75rem; border-radius: 8px; padding: 10px 8px; cursor: pointer; white-space: nowrap;"
-                          title="แยกจานส่วนตัว หรือแยกจำนวนขวด">
-                    ✂️ แยกกิน
+                  <!-- ปุ่มระบุจำนวนขวด (สำหรับคนมาทีหลัง หรือกินน้อย ไม่แตกการ์ดซ้ำ) -->
+                  <button v-if="(item.qty || 1) > 1" 
+                          @click="openCustomQtyModal(b.id, item)" 
+                          style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.8rem; font-weight: 600; border-radius: 8px; padding: 10px 8px; cursor: pointer; white-space: nowrap;"
+                          title="ระบุว่าฉันกินกี่ขวด">
+                    🍺 กินแค่...ขวด
                   </button>
 
                   <button @click="toggleAllConsumers(b.id, item.id)" 
@@ -455,14 +470,19 @@
                 <!-- Consumers Status Line -->
                 <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 6px 10px; border: 1px dashed #334155; font-size: 0.8rem;">
                   <div style="color: #94a3b8;">
-                    คนที่กิน: <strong style="color: #38bdf8;">{{ getConsumerNames(item.consumers) || '(ยังไม่มีใครติ๊ก)' }}</strong>
+                    คนที่กิน: <strong style="color: #38bdf8;">{{ getDetailedConsumerNames(item) || '(ยังไม่มีใครติ๊ก)' }}</strong>
                   </div>
                   <div style="margin-top: 2px;">
                     <span v-if="validConsumers(item).length === 0" style="color: #ef4444; font-size: 0.75rem;">
                       ⚠️ ยังไม่มีคนติ๊กหารรายการนี้
                     </span>
                     <span v-else style="color: #34d399; font-weight: 600; font-size: 0.75rem;">
-                      (หาร {{ validConsumers(item).length }} คน • ตกคนละ ฿{{ formatMoney(item.price / validConsumers(item).length) }})
+                      <span v-if="item.customConsumers && Object.keys(item.customConsumers).length > 0">
+                        (มีคนแยกกินตามจำนวนจริง • ส่วนที่เหลือหารเท่ากัน)
+                      </span>
+                      <span v-else>
+                        (หาร {{ validConsumers(item).length }} คน • ตกคนละ ฿{{ formatMoney(item.price / validConsumers(item).length) }})
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -1163,6 +1183,67 @@
           <button class="btn btn-outline" @click="showSplitModal = false" style="flex: 1;">ยกเลิก</button>
           <button class="btn btn-primary" @click="submitSplitItem" style="flex: 1; padding: 12px; font-weight: 700;">
             ✂️ ตกลงแยกรายการ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 6: ระบุจำนวนขวดที่กิน (คนมาทีหลัง / กินน้อย ไม่แตกการ์ดซ้ำ) -->
+    <!-- ============================================== -->
+    <div v-if="showCustomQtyModal" class="modal-overlay" @click.self="showCustomQtyModal = false">
+      <div class="modal-content" v-if="customQtyTargetItem">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">
+          🍺 ระบุจำนวนที่คุณกิน (คนมาทีหลัง / กินน้อย)
+        </h3>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">
+          จ่ายเฉพาะจำนวนขวดที่คุณดื่มจริง ส่วนขวดที่เหลือเพื่อนๆ ในโต๊ะจะหารเท่ากันอัตโนมัติ (ไม่ทำให้การ์ดในบิลซ้ำซ้อน)
+        </p>
+
+        <div style="background: #0f172a; border-radius: 10px; padding: 12px; margin-bottom: 14px; border: 1px solid #334155;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f8fafc; font-size: 1rem;">{{ customQtyTargetItem.name }}</strong>
+            <span style="color: #fbbf24; font-weight: 800; font-size: 1.1rem;">฿{{ formatMoney(customQtyTargetItem.price) }}</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 2px;">
+            มีทั้งหมด {{ customQtyTargetItem.qty }} ขวด/ชิ้น (ตกชิ้นละ ฿{{ formatMoney(customQtyTargetItem.price / (customQtyTargetItem.qty || 1)) }})
+          </span>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.9rem; color: #38bdf8; font-weight: 700; margin-bottom: 8px;">
+            คุณ ({{ currentMember?.name }}) ดื่ม/กินไปกี่ขวด?
+          </label>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 14px;">
+            <button class="btn btn-outline" @click="customQtyNumber = Math.max(1, customQtyNumber - 1)" style="width: 44px; height: 44px; font-size: 1.3rem; font-weight: 800; padding: 0;">-</button>
+            <input v-model.number="customQtyNumber" type="number" :min="1" :max="customQtyTargetItem.qty" class="input" style="width: 90px; text-align: center; font-size: 1.4rem; font-weight: 800; color: #fbbf24; padding: 8px;" />
+            <button class="btn btn-outline" @click="customQtyNumber = Math.min(customQtyTargetItem.qty, customQtyNumber + 1)" style="width: 44px; height: 44px; font-size: 1.3rem; font-weight: 800; padding: 0;">+</button>
+            <span style="font-size: 1rem; color: #cbd5e1; font-weight: 700;">ขวด</span>
+          </div>
+        </div>
+
+        <!-- Live Calculation Box -->
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 10px; padding: 12px; margin-bottom: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.85rem; color: #cbd5e1;">ยอดที่คุณต้องจ่าย ({{ customQtyNumber }} ขวด):</span>
+            <strong style="color: #fbbf24; font-size: 1.15rem;">
+              ฿{{ formatMoney(customQtyNumber * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }}
+            </strong>
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8; border-top: 1px dashed #475569; padding-top: 6px;">
+            ส่วนที่เหลืออีก {{ customQtyTargetItem.qty - customQtyNumber }} ขวด (฿{{ formatMoney((customQtyTargetItem.qty - customQtyNumber) * (customQtyTargetItem.price / (customQtyTargetItem.qty || 1))) }}) เพื่อนๆ คนอื่นจะหารเท่ากัน
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="btn btn-primary" @click="saveCustomQty" style="padding: 12px; font-weight: 700; font-size: 1rem;">
+            💾 บันทึกว่ากิน {{ customQtyNumber }} ขวด
+          </button>
+          <button v-if="getMyCustomQty(customQtyTargetItem) > 0" class="btn btn-outline" @click="resetToEqualShare" style="padding: 10px; font-size: 0.85rem; border-color: #38bdf8; color: #38bdf8;">
+            🔄 ลบจำนวนขวด (กลับไปหารเท่ากับเพื่อน)
+          </button>
+          <button class="btn btn-outline" @click="showCustomQtyModal = false" style="padding: 10px; font-size: 0.85rem;">
+            ยกเลิก
           </button>
         </div>
       </div>

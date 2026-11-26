@@ -85,6 +85,83 @@ createApp({
       category: 'food'
     });
 
+    // Custom Quantity Modal (ฉันกินแค่...ขวด โดยไม่แตกการ์ดใหม่ ให้คงเหลือใบเดียว!)
+    const showCustomQtyModal = ref(false);
+    const customQtyTargetBillId = ref('');
+    const customQtyTargetItem = ref(null);
+    const customQtyNumber = ref(1);
+
+    function openCustomQtyModal(billId, item) {
+      customQtyTargetBillId.value = billId;
+      customQtyTargetItem.value = item;
+      const myQty = (item.customConsumers && item.customConsumers[currentMemberId.value]) || 1;
+      customQtyNumber.value = myQty;
+      showCustomQtyModal.value = true;
+    }
+
+    function saveCustomQty() {
+      if (!customQtyTargetItem.value) return;
+      socket.value.emit('set-custom-qty', {
+        roomId: currentRoomId.value,
+        billId: customQtyTargetBillId.value,
+        itemId: customQtyTargetItem.value.id,
+        memberId: currentMemberId.value,
+        qty: customQtyNumber.value
+      });
+      showCustomQtyModal.value = false;
+      showToast(`ระบุว่าคุณกิน ${customQtyNumber.value} ขวด/ชิ้น เรียบร้อย! จ่ายเฉพาะส่วนนี้`, 'success');
+    }
+
+    function resetToEqualShare() {
+      if (!customQtyTargetItem.value) return;
+      socket.value.emit('set-custom-qty', {
+        roomId: currentRoomId.value,
+        billId: customQtyTargetBillId.value,
+        itemId: customQtyTargetItem.value.id,
+        memberId: currentMemberId.value,
+        qty: 0
+      });
+      showCustomQtyModal.value = false;
+      showToast('เปลี่ยนกลับเป็นหารเท่ากับเพื่อนเรียบร้อย!', 'info');
+    }
+
+    function getMyCustomQty(item) {
+      if (!item || !item.customConsumers || !currentMemberId.value) return 0;
+      return item.customConsumers[currentMemberId.value] || 0;
+    }
+
+    function resetBillToNomad(billId) {
+      if (confirm('คุณต้องการรีเซ็ตบิลนี้กลับเป็นบิลร้าน 13 รายการดั้งเดิม (ลบรายการที่แยกซ้ำ) ใช่ไหม?')) {
+        socket.value.emit('reset-bill-items', {
+          roomId: currentRoomId.value,
+          billId
+        });
+        showToast('รีเซ็ตบิลกลับเป็น 13 รายการดั้งเดิมเรียบร้อย!', 'success');
+      }
+    }
+
+    function getDetailedConsumerNames(item) {
+      if (!item || !room.value || !room.value.members) return '';
+      const validMap = new Map(room.value.members.map(m => [m.id, m.name]));
+      const custom = item.customConsumers || {};
+      const parts = [];
+
+      for (const [id, q] of Object.entries(custom)) {
+        const name = validMap.get(id);
+        if (name && q > 0) {
+          parts.push(`${name} (${q} ชิ้น)`);
+        }
+      }
+
+      const general = (item.consumers || []).filter(id => validMap.has(id) && !custom[id]);
+      const generalNames = general.map(id => validMap.get(id)).filter(Boolean);
+      if (generalNames.length > 0) {
+        parts.push(generalNames.join(', '));
+      }
+
+      return parts.join(', ');
+    }
+
     // Split Item Form (สำหรับคนมาทีหลัง หรือคนที่กินแค่ไม่กี่ขวด)
     const showSplitModal = ref(false);
     const splitMode = ref('personal'); // 'personal' | 'period'
@@ -1108,6 +1185,15 @@ createApp({
       splitQtyInput,
       splitName1Input,
       splitName2Input,
+      showCustomQtyModal,
+      customQtyTargetItem,
+      customQtyNumber,
+      openCustomQtyModal,
+      saveCustomQty,
+      resetToEqualShare,
+      getMyCustomQty,
+      resetBillToNomad,
+      getDetailedConsumerNames,
       openSplitItemModal,
       updateSplitNames,
       submitSplitItem,

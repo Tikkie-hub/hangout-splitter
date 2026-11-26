@@ -25,15 +25,41 @@ function calculateBill(bill, members) {
   // 1. กรณีมีรายการแจกแจง (Itemized items)
   if (bill.items && bill.items.length > 0) {
     bill.items.forEach(item => {
-      // กรองเฉพาะสมาชิกที่มีอยู่จริงในห้อง ป้องกันไอดีผี หรือ "ไม่ระบุ"
-      const consumers = (item.consumers || []).filter(id => validMemberIds.has(id));
-      const count = consumers.length;
       const itemTotalPrice = parseFloat(item.price) || 0;
+      const totalQty = parseInt(item.qty, 10) || 1;
+      const unitPrice = totalQty > 0 ? (itemTotalPrice / totalQty) : itemTotalPrice;
       totalItemsAmount += itemTotalPrice;
 
-      if (count > 0) {
-        const share = itemTotalPrice / count;
-        consumers.forEach(memberId => {
+      // 1.1 คำนวณคนที่ระบุจำนวนกินจริง (เช่น คนมาทีหลัง/กินน้อย เช่น เบียร์ 22 ขวด แต่กินแค่ 2 ขวด)
+      const customConsumers = item.customConsumers || {};
+      let customTotalCost = 0;
+
+      for (const [memId, q] of Object.entries(customConsumers)) {
+        if (validMemberIds.has(memId) && q > 0) {
+          const qtyForMem = Math.min(q, totalQty);
+          const costForMem = Math.round(qtyForMem * unitPrice * 100) / 100;
+          customTotalCost += costForMem;
+
+          if (memberTotals[memId]) {
+            memberTotals[memId].subtotal += costForMem;
+            memberTotals[memId].itemsConsumed.push({
+              itemId: item.id,
+              name: `${item.name} (${qtyForMem} ขวด/ชิ้น)`,
+              share: costForMem,
+              category: item.category
+            });
+          }
+        }
+      }
+
+      // 1.2 ส่วนที่เหลือ คิดหารเท่าให้กับเพื่อนที่ติ๊กกินปกติ (ไม่รวมคนที่ระบุจำนวนขวดแล้ว)
+      const generalConsumers = (item.consumers || []).filter(id => validMemberIds.has(id) && !customConsumers[id]);
+      const generalCount = generalConsumers.length;
+      const remainingCost = Math.max(0, itemTotalPrice - customTotalCost);
+
+      if (generalCount > 0 && remainingCost > 0) {
+        const share = remainingCost / generalCount;
+        generalConsumers.forEach(memberId => {
           if (memberTotals[memberId]) {
             memberTotals[memberId].subtotal += share;
             memberTotals[memberId].itemsConsumed.push({

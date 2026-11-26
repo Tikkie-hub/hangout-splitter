@@ -476,6 +476,9 @@ io.on('connection', (socket) => {
     const idx = item.consumers.indexOf(memberId);
     if (idx > -1) {
       item.consumers.splice(idx, 1); // ยกเลิกติ๊ก
+      if (item.customConsumers && item.customConsumers[memberId]) {
+        delete item.customConsumers[memberId];
+      }
     } else {
       item.consumers.push(memberId); // ติ๊กกิน
     }
@@ -489,6 +492,60 @@ io.on('connection', (socket) => {
       summary,
       action: { type: 'toggled', itemId, memberId, consumers: item.consumers }
     });
+  });
+
+  // ระบุจำนวนกินจริงสำหรับคนมาทีหลัง / กินน้อย (โดยไม่ต้องแยกการ์ดใหม่ ให้คงเหลือใบเดียว!)
+  socket.on('set-custom-qty', ({ roomId, billId, itemId, memberId, qty }) => {
+    let room = db.getRoom(roomId);
+    if (!room) return;
+    const bill = room.bills.find(b => b.id === billId);
+    if (!bill) return;
+    const item = bill.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (!item.customConsumers) item.customConsumers = {};
+    const parsedQty = parseInt(qty, 10);
+
+    if (parsedQty > 0) {
+      item.customConsumers[memberId] = parsedQty;
+      if (!item.consumers) item.consumers = [];
+      if (!item.consumers.includes(memberId)) item.consumers.push(memberId);
+    } else {
+      delete item.customConsumers[memberId];
+    }
+
+    db.setRoom(roomId, room);
+    const summary = calculateRoomSummary(room);
+    io.to(roomId).emit('room-updated', { room, summary });
+  });
+
+  // รีเซ็ตรายการอาหารกลับเป็นบิลร้านอาหาร 13 รายการดั้งเดิม (ล้างรายการที่แยกซ้ำ)
+  socket.on('reset-bill-items', ({ roomId, billId }) => {
+    let room = db.getRoom(roomId);
+    if (!room) return;
+    const bill = room.bills.find(b => b.id === billId);
+    if (!bill) return;
+
+    const nomadReceiptItems = [
+      { id: 'item_1', name: 'ส้มตำปูปลาร้า', qty: 1, price: 49, category: 'food', consumers: [] },
+      { id: 'item_2', name: 'เส้นลวก', qty: 1, price: 20, category: 'food', consumers: [] },
+      { id: 'item_3', name: 'ข้าวผัดทะเล', qty: 2, price: 178, category: 'food', consumers: [] },
+      { id: 'item_4', name: 'ลาบทอด', qty: 1, price: 129, category: 'food', consumers: [] },
+      { id: 'item_5', name: 'ก้อยดิบ ขม/เปรี้ยว', qty: 1, price: 99, category: 'food', consumers: [] },
+      { id: 'item_6', name: 'ยำวุ้นเส้นหมูสับ', qty: 1, price: 109, category: 'food', consumers: [] },
+      { id: 'item_7', name: 'ลาบหมูคั่วเหนือ', qty: 1, price: 99, category: 'food', consumers: [] },
+      { id: 'item_8', name: 'เฟรนฟราย', qty: 2, price: 118, category: 'food', consumers: [] },
+      { id: 'item_9', name: 'ยำแมงกะพรุนน้ำมันงา', qty: 1, price: 99, category: 'food', consumers: [] },
+      { id: 'item_10', name: 'ต้มแซ่บเล้ง', qty: 1, price: 129, category: 'food', consumers: [] },
+      { id: 'item_11', name: 'เอ็นไก่ทอด', qty: 2, price: 158, category: 'food', consumers: [] },
+      { id: 'item_12', name: 'Singha เบียร์สิงห์ (22 ขวด)', qty: 22, price: 1760, category: 'alcohol', consumers: [] },
+      { id: 'item_13', name: 'ICE (น้ำแข็ง) ใหญ่', qty: 1, price: 20, category: 'mixer', consumers: [] }
+    ];
+
+    bill.items = nomadReceiptItems;
+    db.setRoom(roomId, room);
+    const summary = calculateRoomSummary(room);
+    io.to(roomId).emit('room-updated', { room, summary });
   });
 
   // ปุ่มลัด: ติ๊กทุกคน หรือ ยกเลิกทุกคน ในรายการนั้น
