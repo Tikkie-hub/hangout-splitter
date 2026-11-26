@@ -392,16 +392,24 @@ io.on('connection', (socket) => {
 
     const oldItem = bill.items[idx];
     const totalQty = parseInt(oldItem.qty, 10) || 1;
-    const splitCount = parseInt(splitQty, 10);
+    const splitCount = parseInt(splitQty, 10) || 1;
 
-    if (splitCount <= 0 || splitCount >= totalQty) return;
+    let price1, price2, qty1, qty2;
 
-    const unitPrice = oldItem.price / totalQty;
-    const qty1 = totalQty - splitCount;
-    const qty2 = splitCount;
-
-    const price1 = Math.round(unitPrice * qty1 * 100) / 100;
-    const price2 = Math.round((oldItem.price - price1) * 100) / 100;
+    if (totalQty === 1) {
+      // กรณี 1 จาน แบ่งครึ่ง 50%
+      price1 = Math.round((oldItem.price / 2) * 100) / 100;
+      price2 = Math.round((oldItem.price - price1) * 100) / 100;
+      qty1 = 1;
+      qty2 = 1;
+    } else {
+      if (splitCount <= 0 || splitCount >= totalQty) return;
+      const unitPrice = oldItem.price / totalQty;
+      qty1 = totalQty - splitCount;
+      qty2 = splitCount;
+      price1 = Math.round(unitPrice * qty1 * 100) / 100;
+      price2 = Math.round((oldItem.price - price1) * 100) / 100;
+    }
 
     let consumers1 = [...(oldItem.consumers || [])];
     let consumers2 = [];
@@ -433,6 +441,21 @@ io.on('connection', (socket) => {
     bill.items.splice(idx, 1, item1, item2);
     db.setRoom(roomId, room);
 
+    const summary = calculateRoomSummary(room);
+    io.to(roomId).emit('room-updated', { room, summary });
+  });
+
+  // จานนี้ฉันกินคนเดียว ไม่ต้องหารกับใคร
+  socket.on('claim-alone', ({ roomId, billId, itemId, memberId }) => {
+    let room = db.getRoom(roomId);
+    if (!room) return;
+    const bill = room.bills.find(b => b.id === billId);
+    if (!bill) return;
+    const item = bill.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    item.consumers = [memberId];
+    db.setRoom(roomId, room);
     const summary = calculateRoomSummary(room);
     io.to(roomId).emit('room-updated', { room, summary });
   });

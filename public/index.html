@@ -435,11 +435,11 @@
                     <span>{{ isConsumedByMe(item) ? 'ฉันกินอันนี้' : 'แตะถ้าฉันกินอันนี้' }}</span>
                   </button>
 
-                  <!-- ปุ่มแยกรายการสำหรับคนมาทีหลัง (แสดงเมื่อมีมากกว่า 1 ขวด/จาน) -->
-                  <button v-if="item.qty > 1" @click="openSplitItemModal(b.id, item)" 
+                  <!-- ปุ่มแยกรายการ (แสดงทุกรายการ ให้ทุกคนแยกกินได้อิสระ) -->
+                  <button @click="openSplitItemModal(b.id, item)" 
                           style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-size: 0.75rem; border-radius: 8px; padding: 10px 8px; cursor: pointer; white-space: nowrap;"
-                          title="แยกจำนวนขวดให้คนมาทีหลัง เช่น เบียร์ 22 ขวด แยก 10 ขวดแรกกับ 12 ขวดหลัง">
-                    ✂️ แยกคนมาทีหลัง
+                          title="แยกจานส่วนตัว หรือแยกจำนวนขวด">
+                    ✂️ แยกกิน
                   </button>
 
                   <button @click="toggleAllConsumers(b.id, item.id)" 
@@ -1094,7 +1094,23 @@
           </span>
         </div>
 
-        <div style="margin-bottom: 16px;">
+        <!-- If item has qty == 1 -->
+        <div v-if="splitTargetItem.qty === 1" style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: #38bdf8; font-weight: 700; margin-bottom: 8px;">
+            จานนี้สั่งมา 1 ที่ (฿{{ formatMoney(splitTargetItem.price) }}) เลือกวิธีแยกได้เลย:
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="btn btn-success" @click="claimItemAlone(splitTargetBillId, splitTargetItem)" style="padding: 12px; font-weight: 700; font-size: 0.95rem;">
+              👤 จานนี้ฉันกินคนเดียว (จ่ายคนเดียว ไม่หารกับใคร)
+            </button>
+            <button class="btn btn-outline" @click="submitSplitItem" style="padding: 10px; font-size: 0.85rem; border-color: #f59e0b; color: #fbbf24;">
+              ✂️ แบ่งครึ่งจาน 50% / 50% (ตกคนละ ฿{{ formatMoney(splitTargetItem.price / 2) }})
+            </button>
+          </div>
+        </div>
+
+        <!-- If item has qty > 1 -->
+        <div v-else style="margin-bottom: 16px;">
           <label style="display: block; font-size: 0.85rem; color: #38bdf8; font-weight: 700; margin-bottom: 6px;">
             <span v-if="splitMode === 'personal'">🍺 คุณ ({{ currentMember?.name }}) กิน/ดื่มไปกี่ชิ้น/กี่ขวด?</span>
             <span v-else>🍺 แบ่งให้รอบหลัง (ที่คนมาทีหลังร่วมดื่มด้วย) กี่ชิ้น/ขวด?</span>

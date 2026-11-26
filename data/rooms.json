@@ -443,7 +443,7 @@
       {
         "id": "mem_o2j3v6of",
         "name": "นานะ",
-        "promptpay": "",
+        "promptpay": "6330518688",
         "avatar": "🍻",
         "isHost": true
       },
@@ -485,12 +485,7 @@
             "qty": 1,
             "price": 49,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_2",
@@ -498,11 +493,7 @@
             "qty": 1,
             "price": 20,
             "category": "food",
-            "consumers": [
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_3",
@@ -510,9 +501,7 @@
             "qty": 2,
             "price": 178,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of"
-            ]
+            "consumers": []
           },
           {
             "id": "item_4",
@@ -520,12 +509,7 @@
             "qty": 1,
             "price": 129,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_5",
@@ -533,12 +517,7 @@
             "qty": 1,
             "price": 99,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_6",
@@ -546,12 +525,7 @@
             "qty": 1,
             "price": 109,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_7",
@@ -559,12 +533,7 @@
             "qty": 1,
             "price": 99,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_8",
@@ -572,12 +541,7 @@
             "qty": 2,
             "price": 118,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_9",
@@ -585,12 +549,7 @@
             "qty": 1,
             "price": 99,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_10",
@@ -598,12 +557,7 @@
             "qty": 1,
             "price": 129,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_11",
@@ -611,12 +565,7 @@
             "qty": 2,
             "price": 158,
             "category": "food",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_12",
@@ -624,12 +573,7 @@
             "qty": 22,
             "price": 1760,
             "category": "alcohol",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           },
           {
             "id": "item_13",
@@ -637,12 +581,7 @@
             "qty": 1,
             "price": 20,
             "category": "mixer",
-            "consumers": [
-              "mem_o2j3v6of",
-              "mem_pdurqvsc",
-              "mem_jlyvlunb",
-              "mem_4h8ewkxh"
-            ]
+            "consumers": []
           }
         ],
         "isSlip": false,
@@ -653,9 +592,7 @@
         "createdAt": "2026-11-26T21:36:14.374Z"
       }
     ],
-    "transfersPaid": {
-      "mem_4h8ewkxh_bill_0fl97zlb": false
-    }
+    "transfersPaid": {}
   },
   "0WLLOM": {
     "id": "0WLLOM",

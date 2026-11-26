@@ -137,6 +137,21 @@ createApp({
       }
     }
 
+    function claimItemAlone(billId, item) {
+      if (!currentMemberId.value) {
+        showToast('กรุณาเลือกชื่อของคุณก่อนครับ', 'error');
+        return;
+      }
+      socket.value.emit('claim-alone', {
+        roomId: currentRoomId.value,
+        billId,
+        itemId: item.id,
+        memberId: currentMemberId.value
+      });
+      showSplitModal.value = false;
+      showToast(`จานนี้ ${currentMember.value?.name || 'คุณ'} กินคนเดียว ไม่ต้องหารกับใคร!`, 'success');
+    }
+
     // OCR / Scan Receipt Form
     const isScanning = ref(false);
     const scanStep = ref('upload'); // 'upload' | 'preview'
@@ -1096,6 +1111,7 @@ createApp({
       openSplitItemModal,
       updateSplitNames,
       submitSplitItem,
+      claimItemAlone,
       isScanning,
       scanStep,
       scanReceiptTargetBillId,
